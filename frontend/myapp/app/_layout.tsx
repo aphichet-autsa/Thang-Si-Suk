@@ -1,5 +1,4 @@
 import { Stack } from 'expo-router';
-<<<<<<< HEAD
 import { useState, useEffect } from 'react';
 import { auth } from '../config/firebase-config';  // Firebase Authentication
 
@@ -20,7 +19,7 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <Stack initialRouteName={isLoggedIn ? "home" : "login"}>  {/* ถ้าผู้ใช้ล็อกอินแล้วไปหน้า home, ถ้ายังไม่ได้ล็อกอินไปหน้า login */}
+    <Stack initialRouteName={isLoggedIn ? "home" : "login"}>
       <Stack.Screen name="login" options={{ headerShown: false }} />
       <Stack.Screen name="register" options={{ headerShown: false }} />
       <Stack.Screen name="forgotpassword" options={{ headerShown: false }} />
@@ -28,16 +27,7 @@ export default function RootLayout() {
       <Stack.Screen name="shop" options={{ headerShown: false }} />
       <Stack.Screen name="detail" options={{ headerShown: false }} />
       <Stack.Screen name="registershop" options={{ headerShown: false }} />
-      <Stack.Screen name="home" options={{ headerShown: false }} /> {/* หน้า Home ที่ผู้ใช้จะเข้าถึงหลังจากล็อกอิน */}
-=======
-
-export default function RootLayout() {
-  return (
-    <Stack initialRouteName="login">
-      <Stack.Screen name="login" options={{ headerShown: false }} />
-      <Stack.Screen name="register" options={{ headerShown: false }} />
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
->>>>>>> 391aa03ffc919290c079b900db9c79bd65e7363b
+      <Stack.Screen name="home" options={{ headerShown: false }} />
     </Stack>
   );
 }
