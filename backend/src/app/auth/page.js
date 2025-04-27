@@ -3,7 +3,7 @@
 'use client';  // ระบุว่าเป็น Client Component
 
 import { useRef, useState } from "react";
-import { useRouter } from "next/navigation";  // ใช้ next/navigation สำหรับ Next.js54554545445
+import { useRouter } from "next/navigation";  // ใช้ next/navigation สำหรับ Next.js
 import "./auth.css";  // นำเข้า CSS เท่าเดิม
 
 const Login = () => {
