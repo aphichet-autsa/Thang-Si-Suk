@@ -9,7 +9,7 @@ import "./auth.css";  // นำเข้า CSS เท่าเดิม
 const Login = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-  const router = useRouter();  // ใช้ router จาก Next.js44444
+  const router = useRouter();  // ใช้ router จาก Next.js
 
   const emailRef = useRef(null);
   const passwordRef = useRef(null);
