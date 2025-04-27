@@ -115,7 +115,7 @@ export default function RegisterScreen() {
                 </TouchableOpacity>
               </View>
 
-              <TouchableOpacity style={styles.submitBtn} onPress={() => router.push('/Contract')}> 
+              <TouchableOpacity style={styles.submitBtn} onPress={() => router.push('/contract')}> 
                 <Text style={styles.submitText}>ยืนยัน</Text>
               </TouchableOpacity>
             </View>
