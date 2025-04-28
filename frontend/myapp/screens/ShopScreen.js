@@ -45,7 +45,7 @@ export default function ShopScreen() {
       <View style={styles.titleRow}>
         <Image source={require('../assets/shop.png')} style={styles.shopIcon} />
         <Text style={styles.pageTitle}>ร้านรับซื้อ</Text>
-        <TouchableOpacity style={styles.signupButton} onPress={() => router.push('/registershop')}>
+        <TouchableOpacity style={styles.signupButton} onPress={() => router.push('/Registershop')}>
           <Text style={styles.signupText}>สมัครร้านรับซื้อ</Text>
         </TouchableOpacity>
       </View>
