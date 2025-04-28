@@ -1,88 +1,84 @@
 'use client';
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
+import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db } from "@/firebase"; // Import firebase config
 
 export default function Login() {
   const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    router.push('/home'); // กดแล้วไปหน้า Home
+    try {
+      // 1. Login Firebase Authentication
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // 2. ดึงข้อมูล role จาก Firestore
+      const userDocRef = doc(db, "useradmin", user.uid);
+      const userDocSnap = await getDoc(userDocRef);
+
+      if (userDocSnap.exists()) {
+        const userData = userDocSnap.data();
+        if (userData.role === 'admin') {
+          // ✅ ถ้าเป็น admin ไปหน้า home
+          router.push('/home');
+        } else {
+          // ❌ ไม่ใช่ admin
+          setError('คุณไม่มีสิทธิ์เข้าถึงระบบนี้');
+          await signOut(auth);
+        }
+      } else {
+        // ❌ ไม่มีข้อมูลใน Firestore
+        setError('ไม่พบข้อมูลสิทธิ์ผู้ใช้');
+        await signOut(auth);
+      }
+
+    } catch (err) {
+      console.error(err);
+      setError('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+    }
   };
 
   return (
-    <div style={{
-      backgroundImage: "url('/bg-login.png')",
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      height: '100vh',
-      width: '100vw',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      flexDirection: 'column'
-    }}>
-      {/* โลโก้ */}
-      <Image 
-        src="/thangsisuk.png" 
-        alt="Thangsisuk Logo" 
-        width={150} 
-        height={150} 
-        style={{ marginBottom: 20 }} 
-        priority 
-      />
-
-      {/* กล่อง Login */}
-      <div style={{
-        backgroundColor: 'rgba(255, 255, 255, 0.85)',
-        padding: '30px',
-        borderRadius: '20px',
-        width: '300px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center'
-      }}>
-        <h2 style={{ marginBottom: '20px' }}>เข้าสู่ระบบ</h2>
-        <form onSubmit={handleLogin} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+    <div style={{ textAlign: 'center', marginTop: '50px' }}>
+      <h2>เข้าสู่ระบบ</h2>
+      <form onSubmit={handleLogin} style={{ display: 'inline-block', marginTop: '20px' }}>
+        <div>
           <input 
             type="email" 
             placeholder="ชื่อผู้ใช้หรืออีเมล" 
-            required 
-            style={{
-              padding: '10px',
-              borderRadius: '10px',
-              border: '1px solid #ccc',
-              fontSize: '16px'
-            }}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            style={{ marginBottom: '10px', padding: '10px', borderRadius: '5px', width: '250px' }}
           />
+        </div>
+        <div>
           <input 
             type="password" 
             placeholder="รหัสผ่าน" 
-            required 
-            style={{
-              padding: '10px',
-              borderRadius: '10px',
-              border: '1px solid #ccc',
-              fontSize: '16px'
-            }}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            style={{ marginBottom: '10px', padding: '10px', borderRadius: '5px', width: '250px' }}
           />
-          <button 
-            type="submit"
-            style={{
-              backgroundColor: '#00C853',
-              color: 'white',
-              padding: '10px',
-              borderRadius: '10px',
-              border: 'none',
-              fontSize: '18px',
-              marginTop: '10px'
-            }}
-          >
-            เข้าสู่ระบบ
-          </button>
-        </form>
-      </div>
+        </div>
+        <button 
+          type="submit"
+          style={{ padding: '10px 20px', backgroundColor: '#00C853', color: 'white', border: 'none', borderRadius: '5px', fontSize: '16px' }}
+        >
+          เข้าสู่ระบบ
+        </button>
+      </form>
+
+      {/* แสดง error */}
+      {error && <p style={{ color: 'red', marginTop: '20px' }}>{error}</p>}
     </div>
   );
 }
