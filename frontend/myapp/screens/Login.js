@@ -11,34 +11,48 @@ import {
   ImageBackground,
   ScrollView,
 } from 'react-native';
-import { auth } from '../config/firebase-config';
-import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-} from 'firebase/auth';
+import { auth, db } from '../config/firebase-config';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 const LoginScreen = () => {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false); // ✅ state สำหรับ toggle
 
   const handleLogin = async () => {
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      Alert.alert('เข้าสู่ระบบสำเร็จ!', `Welcome ${userCredential.user.email}`);
-      router.replace('(tabs)');
-    } catch (error) {
-      Alert.alert('เกิดข้อผิดพลาด', error.message);
-    }
-  };
+    const trimmedInput = email.trim();
+    const trimmedPassword = password.trim();
+    let loginEmail = trimmedInput;
 
-  const handleSignup = async () => {
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedInput);
+    if (!isEmail) {
+      try {
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('name', '==', trimmedInput));
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+          const userDoc = querySnapshot.docs[0];
+          loginEmail = userDoc.data().email;
+        } else {
+          Alert.alert('ไม่พบชื่อผู้ใช้', 'กรุณาตรวจสอบชื่อผู้ใช้');
+          return;
+        }
+      } catch (error) {
+        console.error('ค้นหาชื่อผู้ใช้ผิดพลาด:', error);
+        Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถค้นหาชื่อผู้ใช้ได้');
+        return;
+      }
+    }
+
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      Alert.alert('สมัครสมาชิกสำเร็จ!', `Welcome ${userCredential.user.email}`);
-      router.push('/Register');
+      const userCredential = await signInWithEmailAndPassword(auth, loginEmail, trimmedPassword);
+      Alert.alert('เข้าสู่ระบบสำเร็จ!', `Welcome ${userCredential.user.email}`);
+      router.replace('/Home'); 
     } catch (error) {
-      Alert.alert('เกิดข้อผิดพลาด', error.message);
+      Alert.alert('เข้าสู่ระบบล้มเหลว', error.message);
     }
   };
 
@@ -56,7 +70,6 @@ const LoginScreen = () => {
             <View style={styles.card}>
               <Text style={styles.title}>เข้าสู่ระบบ</Text>
 
-              {/* ช่องกรอกอีเมล */}
               <View style={styles.inputWrapper}>
                 <Image source={require('../assets/user.png')} style={styles.iconLeft} />
                 <TextInput
@@ -65,12 +78,10 @@ const LoginScreen = () => {
                   placeholderTextColor="#888"
                   value={email}
                   onChangeText={setEmail}
-                  keyboardType="email-address"
                   autoCapitalize="none"
                 />
               </View>
 
-              {/* ช่องกรอกรหัสผ่าน */}
               <View style={styles.inputWrapper}>
                 <Image source={require('../assets/lock.png')} style={styles.iconLeftSmall} />
                 <TextInput
@@ -79,24 +90,27 @@ const LoginScreen = () => {
                   placeholderTextColor="#888"
                   value={password}
                   onChangeText={setPassword}
-                  secureTextEntry
+                  secureTextEntry={!showPassword} // ✅ ซ่อนรหัส
                 />
-                <Image source={require('../assets/eye.png')} style={styles.iconRight} />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                  <Image
+                    source={require('../assets/eye.png')}
+                    style={[styles.iconRight, showPassword && { tintColor: '#000' }]}
+                  />
+                </TouchableOpacity>
               </View>
 
-              <TouchableOpacity onPress={() => Alert.alert('ลืมรหัสผ่าน')}>
+              <TouchableOpacity onPress={() => Alert.alert('เปลี่ยนรหัสผ่าน')}>
                 <Text style={styles.forgot}>เปลี่ยนรหัสผ่าน</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.loginButton} onPress={() => router.push('/Home')}>
+              <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
                 <Text style={styles.loginText}>เข้าสู่ระบบ</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.signupButton} onPress={() => router.push('/Register')}>
-              <Text style={styles.signupText}>สมัครสมาชิก</Text>
+                <Text style={styles.signupText}>สมัครสมาชิก</Text>
               </TouchableOpacity>
-
-
 
               <View style={styles.dividerContainer}>
                 <View style={styles.line} />
@@ -118,6 +132,7 @@ const LoginScreen = () => {
 };
 
 export default LoginScreen;
+
 const styles = StyleSheet.create({
   background: {
     flex: 1,
@@ -181,7 +196,7 @@ const styles = StyleSheet.create({
   iconRight: {
     width: 22,
     height: 22,
-    tintColor: '#aaa',
+    tintColor: '#888',
   },
   forgot: {
     alignSelf: 'flex-end',

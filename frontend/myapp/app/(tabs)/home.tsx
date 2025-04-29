@@ -1,10 +1,26 @@
-import React from 'react';
-import { View, Text } from 'react-native';
+import { useEffect } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
 
 export default function HomeScreen() {
+  const router = useRouter();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      router.replace('/Home');
+    }, 0); // 3 วินาที
+
+    return () => clearTimeout(timer); // เคลียร์เวลาเมื่อ component หาย
+  }, []);
+
   return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-      <Text>Home Page</Text>
+    <View style={styles.container}>
+      <Text style={styles.text}>ยินดีต้อนรับสู่หน้าหลัก <Text style={{ fontWeight: 'bold' }}>Home!</Text></Text>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  text: { fontSize: 20, fontWeight: '500' },
+});

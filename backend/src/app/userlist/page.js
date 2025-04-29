@@ -139,12 +139,7 @@ export default function UserListPage() {
               placeholder="ค้นหา..."
               style={{ padding: '8px', width: '200px', borderRadius: '4px', border: '1px solid #ddd' }}
             />
-            <button
-              style={buttonStyle}
-              onClick={() => router.push('/adduser')}
-            >
-              เพิ่มผู้ใช้ใหม่
-            </button>
+            
           </div>
 
           {/* Table */}
@@ -171,7 +166,7 @@ export default function UserListPage() {
                   <td style={tdStyle}>{user.password}</td>
                   <td style={tdStyle}>{user.facebook}</td>
                   <td style={tdStyle}>{user.ig}</td>
-                  <td style={tdStyle}>{user.line}</td>
+                  <td style={tdStyle}>{user.idline}</td>
                   <td style={tdStyle}>{user.phoneNumber}</td>
                   <td style={tdStyle}>
                     <button style={editButtonStyle} onClick={() => setEditingUser(user)}>แก้ไข</button>
@@ -198,10 +193,10 @@ function EditUserModal({ user, onClose, onSave }) {
     { name: 'name', label: 'ชื่อผู้ใช้', icon: '/User.png' },
     { name: 'email', label: 'อีเมล', icon: '/Email.png' },
     { name: 'password', label: 'รหัสผ่าน', icon: '/Lock.png' },
-    { name: 'phoneNumber', label: 'เบอร์โทร', icon: '/Phone.png' },
-    { name: 'facebook', label: 'Facebook', icon: '/Facebook.png' },
-    { name: 'ig', label: 'Instagram', icon: '/Instagram.png' },
-    { name: 'line', label: 'Line', icon: '/Line.png' },
+    { name: 'phoneNumber', label: 'เบอร์โทร', icon: '/Call.png' },
+    { name: 'facebook', label: 'Facebook', icon: '/fackbook.png' },
+    { name: 'ig', label: 'Instagram', icon: '/ig.png' },
+    { name: 'idline', label: 'Line', icon: '/Line.png' },
   ];
 
   const handleChange = (e) => {

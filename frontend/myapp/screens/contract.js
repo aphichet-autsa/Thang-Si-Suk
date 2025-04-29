@@ -1,18 +1,15 @@
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  ImageBackground,
+  View, Text, StyleSheet, Image, TextInput, TouchableOpacity,
+  ScrollView, ImageBackground, KeyboardAvoidingView, Platform
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { auth, db } from '../config/firebase-config';
+import { collection, getDoc, getDocs, doc, setDoc, updateDoc } from 'firebase/firestore';
 
 function ContractScreen() {
   const router = useRouter();
+  const { password: passedPassword } = useLocalSearchParams();
 
   const [facebookName, setFacebookName] = useState('');
   const [facebookLink, setFacebookLink] = useState('');
@@ -22,95 +19,141 @@ function ContractScreen() {
   const [igLink, setIgLink] = useState('');
   const [phone, setPhone] = useState('');
   const [backupPhone, setBackupPhone] = useState('');
-  const [errorMessage, setErrorMessage] = useState(''); // ✅ เพิ่มสำหรับแจ้งเตือน
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const filled =
-      facebookName.trim() ||
-      facebookLink.trim() ||
-      lineId.trim() ||
-      lineLink.trim() ||
-      igName.trim() ||
-      igLink.trim() ||
-      phone.trim() ||
-      backupPhone.trim();
+      facebookName.trim() || facebookLink.trim() || lineId.trim() || lineLink.trim() ||
+      igName.trim() || igLink.trim() || phone.trim() || backupPhone.trim();
 
     if (!filled) {
       setErrorMessage('⚠️ กรุณากรอกข้อมูลอย่างน้อย 1 ช่องก่อนกดยืนยัน');
       return;
     }
 
-    setErrorMessage('');
-    router.replace('/login');
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        setErrorMessage('ยังไม่มีผู้ใช้ล็อกอิน');
+        return;
+      }
+
+      const userRef = doc(db, 'users', user.uid);
+      const docSnap = await getDoc(userRef);  // ✅ เพิ่มตรงนี้
+
+      const updateData = {
+        email: user.email,
+        facebook: facebookName,
+        facebooklink: facebookLink,
+        idline: lineId,
+        ig: igName,
+        iglink: igLink,
+        name: user.displayName || '',
+        password: passedPassword || '',
+        phoneNumber: phone,
+        role: 'user',
+        uid: user.uid,
+      };
+
+      if (docSnap.exists()) {
+        await updateDoc(userRef, updateData);
+      } else {
+        const usersCol = collection(db, 'users');
+        const snapshot = await getDocs(usersCol);
+
+        let maxId = 0;
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          if (data.id && data.id > maxId) {
+            maxId = data.id;
+          }
+        });
+
+        const nextId = maxId + 1;
+        updateData.id = nextId;
+
+        await setDoc(userRef, updateData);
+      }
+
+      setErrorMessage('');
+      router.replace('/login');
+    } catch (error) {
+      console.error('เกิดข้อผิดพลาด:', error);
+      setErrorMessage('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+    }
   };
 
   return (
-    <ImageBackground
-      source={require('../assets/bg.png')}
-      style={styles.background}
-      resizeMode="cover"
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <View style={styles.container}>
-          <Image source={require('../assets/logo2.png')} style={styles.logo} resizeMode="contain" />
+      <ImageBackground
+        source={require('../assets/bg.png')}
+        style={styles.background}
+        resizeMode="cover"
+      >
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+          <View style={styles.container}>
+            <Image source={require('../assets/logo2.png')} style={styles.logo} resizeMode="contain" />
 
-          <View style={styles.card}>
-            <Text style={styles.title}>โปรดใส่ข้อมูลติดต่อ</Text>
+            <View style={styles.card}>
+              <Text style={styles.title}>โปรดใส่ข้อมูลติดต่อ</Text>
 
-            {/* ✅ กล่องข้อความแจ้งเตือน */}
-            {errorMessage ? (
-              <View style={styles.errorBox}>
-                <Text style={styles.errorText}>{errorMessage}</Text>
-              </View>
-            ) : null}
+              {errorMessage ? (
+                <View style={styles.errorBox}>
+                  <Text style={styles.errorText}>{errorMessage}</Text>
+                </View>
+              ) : null}
 
-            <ContactRow
-              icon={require('../assets/facebook.png')}
-              label1="ชื่อเฟส"
-              label2="ลิงก์เฟส"
-              value1={facebookName}
-              value2={facebookLink}
-              onChangeText1={setFacebookName}
-              onChangeText2={setFacebookLink}
-            />
+              <ContactRow
+                icon={require('../assets/facebook.png')}
+                label1="ชื่อเฟส"
+                label2="ลิงก์เฟส"
+                value1={facebookName}
+                value2={facebookLink}
+                onChangeText1={setFacebookName}
+                onChangeText2={setFacebookLink}
+              />
 
-            <ContactRow
-              icon={require('../assets/line.png')}
-              label1="ไอดีไลน์"
-              label2="ลิงก์ไลน์"
-              value1={lineId}
-              value2={lineLink}
-              onChangeText1={setLineId}
-              onChangeText2={setLineLink}
-            />
+              <ContactRow
+                icon={require('../assets/line.png')}
+                label1="ไอดีไลน์"
+                label2="ลิงก์ไลน์"
+                value1={lineId}
+                value2={lineLink}
+                onChangeText1={setLineId}
+                onChangeText2={setLineLink}
+              />
 
-            <ContactRow
-              icon={require('../assets/instagram.png')}
-              label1="ชื่อไอจี"
-              label2="ลิงก์ไอจี"
-              value1={igName}
-              value2={igLink}
-              onChangeText1={setIgName}
-              onChangeText2={setIgLink}
-            />
+              <ContactRow
+                icon={require('../assets/instagram.png')}
+                label1="ชื่อไอจี"
+                label2="ลิงก์ไอจี"
+                value1={igName}
+                value2={igLink}
+                onChangeText1={setIgName}
+                onChangeText2={setIgLink}
+              />
 
-            <ContactRow
-              icon={require('../assets/call.png')}
-              label1="เบอร์โทร"
-              label2="เบอร์สำรอง"
-              value1={phone}
-              value2={backupPhone}
-              onChangeText1={setPhone}
-              onChangeText2={setBackupPhone}
-            />
+              <ContactRow
+                icon={require('../assets/call.png')}
+                label1="เบอร์โทร"
+                label2="เบอร์สำรอง"
+                value1={phone}
+                value2={backupPhone}
+                onChangeText1={setPhone}
+                onChangeText2={setBackupPhone}
+              />
 
-            <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-              <Text style={styles.buttonText}>ยืนยัน</Text>
-            </TouchableOpacity>
+              <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+                <Text style={styles.buttonText}>ยืนยัน</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </ScrollView>
-    </ImageBackground>
+        </ScrollView>
+      </ImageBackground>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -122,12 +165,14 @@ function ContactRow({ icon, label1, label2, value1, value2, onChangeText1, onCha
         <TextInput
           style={styles.input}
           placeholder={label1}
+          placeholderTextColor="#000"
           value={value1}
           onChangeText={onChangeText1}
         />
         <TextInput
           style={styles.input}
           placeholder={label2}
+          placeholderTextColor="#000"
           value={value2}
           onChangeText={onChangeText2}
         />
@@ -171,6 +216,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     alignSelf: 'center',
     marginBottom: 20,
+    color: '#000',
   },
   row: {
     flexDirection: 'row',
@@ -194,6 +240,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     marginBottom: 8,
     backgroundColor: '#fff',
+    color: '#000',
   },
   button: {
     marginTop: 10,
