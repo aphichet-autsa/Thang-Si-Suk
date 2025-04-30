@@ -78,7 +78,7 @@ export default function HomeScreen() {
         <View style={styles.navBar}>
           <NavItem icon={require('../assets/home-2.png')} label="หน้าแรก" active />
           <NavItem icon={require('../assets/shop.png')} label="ร้านรับซื้อ" onPress={() => router.push('/shop')} />
-         <TouchableOpacity style={styles.navItemCenter} onPress={() => router.push('/Post')}>
+         <TouchableOpacity style={styles.navItemCenter} onPress={() => router.push('/post')}>
                    <Image source={require('../assets/plus.png')} style={styles.bottomIconCenter} />
           </TouchableOpacity>
           <NavItem icon={require('../assets/location.png')} label="ร้านใกล้ฉัน" active />
