@@ -108,7 +108,7 @@ const LoginScreen = () => {
                 <Text style={styles.loginText}>เข้าสู่ระบบ</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.signupButton} onPress={() => router.push('/Register')}>
+              <TouchableOpacity style={styles.signupButton} onPress={() => router.push('/register')}>
                 <Text style={styles.signupText}>สมัครสมาชิก</Text>
               </TouchableOpacity>
 
