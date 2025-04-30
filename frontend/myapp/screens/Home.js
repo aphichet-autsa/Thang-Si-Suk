@@ -53,8 +53,8 @@ export default function HomeScreen() {
           {/* Feature Buttons */}
           <View style={styles.featureRow}>
             <FeatureButton title="ร้านรับซื้อ" icon={require('../assets/bg-home.png')} onPress={() => router.push('/shop')} />
-            <FeatureButton title="โพสต์ซื้อขาย" icon={require('../assets/excellent.png')} onPress={() => router.push('/Post')} />
-            <FeatureButton title="บริจาค" icon={require('../assets/fundraising.png')} onPress={() => router.push('/Post')} />
+            <FeatureButton title="โพสต์ซื้อขาย" icon={require('../assets/excellent.png')} onPress={() => router.push('/post')} />
+            <FeatureButton title="บริจาค" icon={require('../assets/fundraising.png')} onPress={() => router.push('/post')} />
           </View>
 
           {/* Poster Row 1 */}

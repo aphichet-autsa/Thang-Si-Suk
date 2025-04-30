@@ -21,7 +21,7 @@ export default function ImagePickerComponent({ images, setImages }) {
     <TouchableOpacity style={styles.imageBox} onPress={pickImages}>
       {images.length === 0 ? (
         <Image
-          source={require('../assets/image-placeholder.png')}
+          source={require('../assets/BB.png')}
           style={styles.placeholder}
           resizeMode="contain"
         />

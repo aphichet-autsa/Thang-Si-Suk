@@ -18,13 +18,13 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <Stack initialRouteName={isLoggedIn ? "home" : "Login"}>
-      <Stack.Screen name="Login" options={{ headerShown: false }} />
+    <Stack initialRouteName={isLoggedIn ? "home" : "login"}>
+      <Stack.Screen name="login" options={{ headerShown: false }} />
       <Stack.Screen name="register" options={{ headerShown: false }} />
       <Stack.Screen name="forgotpassword" options={{ headerShown: false }} />
       <Stack.Screen name="contract" options={{ headerShown: false }} />
-      <Stack.Screen name="Shop" options={{ headerShown: false }} />
-      <Stack.Screen name="Post" options={{ headerShown: false }} />
+      <Stack.Screen name="shop" options={{ headerShown: false }} />
+      <Stack.Screen name="post" options={{ headerShown: false }} />
       <Stack.Screen name="detail" options={{ headerShown: false }} />
       <Stack.Screen name="registershop" options={{ headerShown: false }} />
       <Stack.Screen name="home" options={{ headerShown: false }} />
