@@ -74,7 +74,7 @@ export default function PostScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#fff' }}> {/* ✅ เพิ่ม backgroundColor ให้ View หลัก */}
+    <View style={{ flex: 1, backgroundColor: '#fff' }}>
       {/* 🔥 Header ด้านบน */}
       <HeaderOnly />
 
