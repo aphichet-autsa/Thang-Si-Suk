@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, TextInput 
 import { Camera } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import ImagePickerComponent from '../components/ImagePickerComponent';
-import { HeaderOnly, BottomNavOnly } from '../components/header'; // ✅ import HeaderOnly, BottomNavOnly แยกกัน
+import { HeaderOnly, BottomNavOnly } from '../components/header';
 
 export default function PostScreen() {
   const router = useRouter();
@@ -56,15 +56,15 @@ export default function PostScreen() {
         <Camera style={styles.camera} ref={cameraRef}>
           <View style={styles.cameraButtons}>
             <TouchableOpacity style={styles.captureButton} onPress={takePicture}>
-              <Text style={styles.buttonText}>📸 ถ่ายรูป</Text>
+              <Text style={styles.buttonText}>ถ่ายรูป</Text>
             </TouchableOpacity>
             {!isRecording ? (
               <TouchableOpacity style={styles.captureButton} onPress={startRecording}>
-                <Text style={styles.buttonText}>🎥 เริ่มอัด</Text>
+                <Text style={styles.buttonText}>เริ่มอัด</Text>
               </TouchableOpacity>
             ) : (
               <TouchableOpacity style={[styles.captureButton, { backgroundColor: 'red' }]} onPress={stopRecording}>
-                <Text style={styles.buttonText}>🛑 หยุดอัด</Text>
+                <Text style={styles.buttonText}>หยุดอัด</Text>
               </TouchableOpacity>
             )}
           </View>

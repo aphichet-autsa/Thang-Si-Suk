@@ -35,8 +35,8 @@ export default function ShopScreen() {
           <TouchableOpacity onPress={() => router.push('/')}>
             <Image source={require('../assets/location.png')} style={styles.icon} />
           </TouchableOpacity>
-           <TouchableOpacity style={styles.navItemCenter} onPress={() => router.push('/')}>
-              <Image source={require('../assets/logout.png')} style={styles.bottomIconCenter} />
+           <TouchableOpacity onPress={() => router.push('/')}>
+              <Image source={require('../assets/logout.png')} style={styles.icon} />
           </TouchableOpacity>
         </View>
       </View>
