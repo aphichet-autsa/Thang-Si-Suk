@@ -1,82 +1,26 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, TextInput } from 'react-native';
-import { Camera } from 'expo-camera';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import ImagePickerComponent from '../components/ImagePickerComponent';
-import { HeaderOnly, BottomNavOnly } from '../components/header';
+import CameraComponent from '../components/CameraComponent'; // นำเข้ากล้อง
 
 export default function PostScreen() {
   const router = useRouter();
   const [images, setImages] = useState([]);
   const [caption, setCaption] = useState('');
   const [showCamera, setShowCamera] = useState(false);
-  const [hasPermission, setHasPermission] = useState(null);
-  const [isRecording, setIsRecording] = useState(false);
-  const cameraRef = useRef(null);
-
-  useEffect(() => {
-    (async () => {
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      setHasPermission(status === 'granted');
-    })();
-  }, []);
 
   const openCamera = () => setShowCamera(true);
 
-  const takePicture = async () => {
-    if (cameraRef.current) {
-      const photo = await cameraRef.current.takePictureAsync();
-      setImages(prev => [...prev, photo.uri]);
-      setShowCamera(false);
-    }
+  const handlePictureTaken = (uri) => {
+    setImages(prev => [...prev, uri]);  // รับภาพและเพิ่มลงใน state
+    setShowCamera(false);  // ปิดกล้องหลังจากถ่าย
   };
-
-  const startRecording = async () => {
-    if (cameraRef.current) {
-      setIsRecording(true);
-      const video = await cameraRef.current.recordAsync();
-      setImages(prev => [...prev, video.uri]);
-      setIsRecording(false);
-      setShowCamera(false);
-    }
-  };
-
-  const stopRecording = () => {
-    if (cameraRef.current && isRecording) {
-      cameraRef.current.stopRecording();
-    }
-  };
-
-  if (showCamera) {
-    if (hasPermission === null) return <View />;
-    if (hasPermission === false) return <Text>ไม่มีสิทธิ์เข้าถึงกล้อง</Text>;
-
-    return (
-      <View style={styles.cameraContainer}>
-        <Camera style={styles.camera} ref={cameraRef}>
-          <View style={styles.cameraButtons}>
-            <TouchableOpacity style={styles.captureButton} onPress={takePicture}>
-              <Text style={styles.buttonText}>ถ่ายรูป</Text>
-            </TouchableOpacity>
-            {!isRecording ? (
-              <TouchableOpacity style={styles.captureButton} onPress={startRecording}>
-                <Text style={styles.buttonText}>เริ่มอัด</Text>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity style={[styles.captureButton, { backgroundColor: 'red' }]} onPress={stopRecording}>
-                <Text style={styles.buttonText}>หยุดอัด</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </Camera>
-      </View>
-    );
-  }
 
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
       {/* 🔥 Header ด้านบน */}
-      <HeaderOnly />
+      {/* ... */}
 
       {/* 🔥 SubHeader */}
       <View style={styles.subHeader}>
@@ -122,12 +66,14 @@ export default function PostScreen() {
         </View>
       </ScrollView>
 
+      {/* 🔥 Camera Component */}
+      {showCamera && <CameraComponent onPictureTaken={handlePictureTaken} />}
+
       {/* 🔥 Bottom Navigation Bar */}
-      <BottomNavOnly />
+      {/* ... */}
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   subHeader: {
     flexDirection: 'row',
