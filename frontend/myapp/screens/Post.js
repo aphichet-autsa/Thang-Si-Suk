@@ -1,32 +1,109 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Image, FlatList, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Camera } from 'expo-camera';
-import ImagePickerComponent from '../components/ImagePickerComponent';
-import CameraComponent from '../components/CameraComponent';  // นำเข้า CameraComponent
+import * as ImagePicker from 'expo-image-picker';
 
 export default function PostScreen() {
   const router = useRouter();
-  const [images, setImages] = useState([]);
+  const [images, setImages] = useState([]); // เก็บภาพที่เลือก
   const [caption, setCaption] = useState('');
-  const [showCamera, setShowCamera] = useState(false);
   const [hasPermission, setHasPermission] = useState(null);
-  const [isRecording, setIsRecording] = useState(false);
-  const cameraRef = useRef(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(null); // เลือกภาพที่จะลบหรือแก้ไข
 
   useEffect(() => {
-    (async () => {
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      setHasPermission(status === 'granted');
-    })();
+    const checkPermissions = async () => {
+      // ตรวจสอบสิทธิ์การเข้าถึงกล้อง
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        alert('กรุณาอนุญาตให้ใช้กล้อง');
+      } else {
+        setHasPermission(true);
+      }
+
+      // ตรวจสอบสิทธิ์การเข้าถึงแกลเลอรี
+      const { status: mediaStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (mediaStatus !== 'granted') {
+        alert('กรุณาอนุญาตให้เข้าถึงแกลเลอรี');
+      }
+    };
+    checkPermissions();
   }, []);
 
-  const openCamera = () => setShowCamera(true);
+  const openCamera = async () => {
+    if (hasPermission && images.length < 8) { // จำกัดจำนวนภาพไม่เกิน 8
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: false,
+        quality: 1,
+        mediaTypes: ImagePicker.MediaTypeImages,
+      });
 
-  const handlePictureTaken = (uri) => {
-    setImages(prev => [...prev, uri]);  // รับภาพและเพิ่มลงใน state
-    setShowCamera(false);  // ปิดกล้องหลังจากถ่าย
+      console.log("Camera result:", result);  // ตรวจสอบผลลัพธ์จากการถ่ายภาพ
+      if (!result.cancelled && result.assets && result.assets[0].uri) {
+        setImages((prev) => [...prev, result.assets[0].uri]);  // ดึง URI จาก assets[0].uri
+      } else {
+        console.log("ไม่สามารถรับ URI ได้จากกล้อง");
+      }
+    } else {
+      alert('กรุณาอนุญาตให้ใช้กล้อง หรือภาพเกินจำนวนที่กำหนด');
+    }
   };
+
+  const openGallery = async () => {
+    if (hasPermission && images.length < 8) { // จำกัดจำนวนภาพไม่เกิน 8
+      const result = await ImagePicker.launchImageLibraryAsync({
+        allowsEditing: false,
+        quality: 1,
+        mediaTypes: ImagePicker.MediaTypeImages,
+      });
+
+      console.log("Gallery result:", result); // ตรวจสอบผลลัพธ์จากการเลือกภาพ
+      if (!result.cancelled && result.assets && result.assets[0].uri) {
+        setImages((prev) => [...prev, result.assets[0].uri]);  // ดึง URI จาก assets[0].uri
+      } else {
+        console.log("ไม่สามารถรับ URI ได้จากแกลเลอรี");
+      }
+    } else {
+      alert('กรุณาอนุญาตให้เข้าถึงแกลเลอรี หรือภาพเกินจำนวนที่กำหนด');
+    }
+  };
+
+  const renderImageItem = ({ item, index }) => {
+    return (
+      <TouchableOpacity onPress={() => handleImagePress(index)}>
+        <View style={styles.imageContainer}>
+          <Image source={{ uri: item }} style={styles.image} resizeMode="cover" />
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  const handleImagePress = (index) => {
+    setSelectedImageIndex(index);
+    setModalVisible(true); // เปิด modal เมื่อกดที่ภาพ
+  };
+
+  const handleDeleteImage = () => {
+    setImages((prevImages) => prevImages.filter((_, index) => index !== selectedImageIndex)); // ลบภาพที่เลือก
+    setModalVisible(false);
+  };
+
+  const handleCancel = () => {
+    setModalVisible(false); // ปิด modal เมื่อกด Cancel
+  };
+
+  const handleSave = () => {
+    // สามารถเพิ่มการแก้ไขภาพที่นี่
+    setModalVisible(false);
+  };
+
+  if (hasPermission === null) {
+    return <View />;
+  }
+
+  if (hasPermission === false) {
+    return <Text>ไม่มีสิทธิ์เข้าถึงกล้อง</Text>;
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
@@ -36,9 +113,15 @@ export default function PostScreen() {
           <Image source={require('../assets/back.png')} style={styles.smallIcon} />
         </TouchableOpacity>
         <Text style={styles.subHeaderTitle}>โพสต์</Text>
-        <TouchableOpacity onPress={openCamera}>
-          <Image source={require('../assets/camera.png')} style={styles.smallIcon} />
-        </TouchableOpacity>
+        {/* ไอคอนกล้องและรูปภาพ */}
+        <View style={styles.iconContainer}>
+          <TouchableOpacity onPress={openCamera}>
+            <Image source={require('../assets/camera.png')} style={styles.smallIcon} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={openGallery}>
+            <Image source={require('../assets/image.png')} style={styles.smallIcon} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* 🔥 ScrollView ส่วนกลาง */}
@@ -51,10 +134,16 @@ export default function PostScreen() {
           multiline
         />
 
-        <View style={styles.imagePickerWrapper}>
-          <ImagePickerComponent images={images} setImages={setImages} />
-        </View>
+        {/* แสดงภาพที่เลือก */}
+        <FlatList
+          data={images}
+          renderItem={renderImageItem}
+          keyExtractor={(item, index) => index.toString()}
+          horizontal
+          style={styles.imageList}
+        />
 
+        {/* เพิ่มตำแหน่ง */}
         <View style={styles.locationRow}>
           <Image source={require('../assets/location.png')} style={styles.locationIcon} />
           <Text style={styles.addLocation}>เพิ่มตำแหน่งของคุณ</Text>
@@ -70,10 +159,24 @@ export default function PostScreen() {
         </View>
       </ScrollView>
 
-      {/* 🔥 Camera Component */}
-      {showCamera && (
-        <CameraComponent onPictureTaken={handlePictureTaken} />
-      )}
+      {/* Modal สำหรับลบหรือแก้ไขภาพ */}
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setModalVisible(false)}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text>คุณต้องการทำอะไรกับภาพนี้?</Text>
+            <TouchableOpacity onPress={handleDeleteImage}>
+              <Text style={styles.modalButton}>ลบภาพ</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleCancel}>
+              <Text style={styles.modalButton}>ยกเลิก</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -85,18 +188,23 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 15,
     paddingVertical: 10,
-    backgroundColor: '#fff',
+    backgroundColor: '#B7E305',
     borderBottomWidth: 1,
     borderColor: '#ddd',
   },
   subHeaderTitle: {
-    fontSize: 30,
+    fontSize: 25,
     fontWeight: 'bold',
-    color: '#000',
+    color: '#fff',
   },
   smallIcon: {
     width: 40,
     height: 40,
+  },
+  iconContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: 90,
   },
   scrollContent: {
     padding: 20,
@@ -110,12 +218,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f8f8',
     borderRadius: 10,
   },
-  imagePickerWrapper: {
-    borderWidth: 2,
-    borderColor: '#3b82f6',
-    borderRadius: 10,
+  imageList: {
+    marginTop: 20,
     marginBottom: 15,
-    overflow: 'hidden',
+  },
+  imageContainer: {
+    marginRight: 20,
+  },
+  image: {
+    width: 120,
+    height: 120,
+    borderRadius: 10,
+    margin: 5,
+    borderWidth: 1,
+    borderColor: '#ddd',
   },
   locationRow: {
     flexDirection: 'row',
@@ -155,5 +271,23 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    width: 300,
+    padding: 20,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalButton: {
+    fontSize: 18,
+    color: '#007BFF',
+    marginVertical: 10,
   },
 });
