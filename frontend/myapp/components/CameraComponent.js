@@ -1,3 +1,4 @@
+// CameraComponent.js
 import React, { useState, useRef, useEffect } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { Camera } from 'expo-camera';
@@ -92,4 +93,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CameraComponent;
+export default CameraComponent;  // ตรวจสอบให้แน่ใจว่าเป็น export default

@@ -1,14 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Image } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Camera } from 'expo-camera';
 import ImagePickerComponent from '../components/ImagePickerComponent';
-import CameraComponent from '../components/CameraComponent'; // นำเข้ากล้อง
+import CameraComponent from '../components/CameraComponent';  // นำเข้า CameraComponent
 
 export default function PostScreen() {
   const router = useRouter();
   const [images, setImages] = useState([]);
   const [caption, setCaption] = useState('');
   const [showCamera, setShowCamera] = useState(false);
+  const [hasPermission, setHasPermission] = useState(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const cameraRef = useRef(null);
+
+  useEffect(() => {
+    (async () => {
+      const { status } = await Camera.requestCameraPermissionsAsync();
+      setHasPermission(status === 'granted');
+    })();
+  }, []);
 
   const openCamera = () => setShowCamera(true);
 
@@ -19,9 +30,6 @@ export default function PostScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
-      {/* 🔥 Header ด้านบน */}
-      {/* ... */}
-
       {/* 🔥 SubHeader */}
       <View style={styles.subHeader}>
         <TouchableOpacity onPress={() => router.back()}>
@@ -35,7 +43,6 @@ export default function PostScreen() {
 
       {/* 🔥 ScrollView ส่วนกลาง */}
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* ช่องใส่คำบรรยาย */}
         <TextInput
           style={styles.captionInput}
           placeholder="เพิ่มคำบรรยาย..."
@@ -44,18 +51,15 @@ export default function PostScreen() {
           multiline
         />
 
-        {/* รูปภาพที่เลือก */}
         <View style={styles.imagePickerWrapper}>
           <ImagePickerComponent images={images} setImages={setImages} />
         </View>
 
-        {/* ไอคอน location */}
         <View style={styles.locationRow}>
           <Image source={require('../assets/location.png')} style={styles.locationIcon} />
           <Text style={styles.addLocation}>เพิ่มตำแหน่งของคุณ</Text>
         </View>
 
-        {/* ปุ่ม ยกเลิก / ยืนยัน */}
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.cancelButton}>
             <Text style={styles.buttonText}>ยกเลิก</Text>
@@ -67,13 +71,13 @@ export default function PostScreen() {
       </ScrollView>
 
       {/* 🔥 Camera Component */}
-      {showCamera && <CameraComponent onPictureTaken={handlePictureTaken} />}
-
-      {/* 🔥 Bottom Navigation Bar */}
-      {/* ... */}
+      {showCamera && (
+        <CameraComponent onPictureTaken={handlePictureTaken} />
+      )}
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   subHeader: {
     flexDirection: 'row',
@@ -151,24 +155,5 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 16,
     fontWeight: 'bold',
-  },
-  cameraContainer: {
-    flex: 1,
-  },
-  camera: {
-    flex: 1,
-  },
-  cameraButtons: {
-    flex: 1,
-    backgroundColor: 'transparent',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'flex-end',
-    marginBottom: 30,
-  },
-  captureButton: {
-    backgroundColor: '#ffffff90',
-    padding: 15,
-    borderRadius: 10,
   },
 });
