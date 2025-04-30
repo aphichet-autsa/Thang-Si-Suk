@@ -76,7 +76,7 @@ function ContractScreen() {
       }
 
       setErrorMessage('');
-      router.replace('/login');
+      router.replace('/Login');
     } catch (error) {
       console.error('เกิดข้อผิดพลาด:', error);
       setErrorMessage('เกิดข้อผิดพลาดในการบันทึกข้อมูล');

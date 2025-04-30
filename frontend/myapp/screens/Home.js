@@ -8,9 +8,11 @@ import {
   ImageBackground,
   TouchableOpacity,
 } from 'react-native';
+import { useRouter } from 'expo-router';  // ใช้สำหรับการนำทางใน Expo
 
 export default function HomeScreen() {
-  // 🔧 แก้ตรงนี้: ใช้ static require แทน dynamic require
+  const router = useRouter(); // สร้างตัวแปรเพื่อใช้ใน router
+
   const imageSources = [
     require('../assets/bin-card.png'),
     require('../assets/image15.png'),
@@ -28,11 +30,12 @@ export default function HomeScreen() {
             <Text style={styles.headerTitle}>THANGSISUK</Text>
             <View style={styles.headerIcons}>
               <Image source={require('../assets/location.png')} style={styles.iconSmall} />
-              <Image source={require('../assets/logout.png')} style={styles.iconSmall} />
+              <TouchableOpacity style={styles.navItemCenter} onPress={() => router.push('/')}>
+                   <Image source={require('../assets/logout.png')} style={styles.bottomIconCenter} />
+              </TouchableOpacity>
             </View>
           </View>
 
-        
           {/* Scrollable Cards */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollSection}>
             {imageSources.map((source, index) => (
@@ -49,9 +52,9 @@ export default function HomeScreen() {
 
           {/* Feature Buttons */}
           <View style={styles.featureRow}>
-            <FeatureButton title="ร้านรับซื้อ" icon={require('../assets/bg-home.png')} />
-            <FeatureButton title="โพสต์ซื้อขาย" icon={require('../assets/excellent.png')} />
-            <FeatureButton title="บริจาค" icon={require('../assets/fundraising.png')} />
+            <FeatureButton title="ร้านรับซื้อ" icon={require('../assets/bg-home.png')} onPress={() => router.push('/shop')} />
+            <FeatureButton title="โพสต์ซื้อขาย" icon={require('../assets/excellent.png')} onPress={() => router.push('/Post')} />
+            <FeatureButton title="บริจาค" icon={require('../assets/fundraising.png')} onPress={() => router.push('/Post')} />
           </View>
 
           {/* Poster Row 1 */}
@@ -74,11 +77,11 @@ export default function HomeScreen() {
         {/* Bottom Nav */}
         <View style={styles.navBar}>
           <NavItem icon={require('../assets/home-2.png')} label="หน้าแรก" active />
-          <NavItem icon={require('../assets/shop.png')} label="ร้านรับซื้อ" />
-          <TouchableOpacity style={styles.addButton}>
-            <Image source={require('../assets/plus.png')} style={{ width: 30, height: 30 }} />
+          <NavItem icon={require('../assets/shop.png')} label="ร้านรับซื้อ" onPress={() => router.push('/shop')} />
+         <TouchableOpacity style={styles.navItemCenter} onPress={() => router.push('/Post')}>
+                   <Image source={require('../assets/plus.png')} style={styles.bottomIconCenter} />
           </TouchableOpacity>
-          <NavItem icon={require('../assets/location.png')} label="ร้านใกล้ฉัน" />
+          <NavItem icon={require('../assets/location.png')} label="ร้านใกล้ฉัน" active />
           <NavItem icon={require('../assets/test-account.png')} label="ฉัน" />
         </View>
       </View>
@@ -86,18 +89,20 @@ export default function HomeScreen() {
   );
 }
 
-const FeatureButton = ({ title, icon }) => (
-  <TouchableOpacity style={styles.featureBtn}>
+const FeatureButton = ({ title, icon, onPress }) => (
+  <TouchableOpacity style={styles.featureBtn} onPress={onPress}>
     <Image source={icon} style={styles.featureIcon} />
     <Text style={styles.featureText}>{title}</Text>
   </TouchableOpacity>
 );
 
-const NavItem = ({ icon, label, active }) => (
-  <View style={styles.navItem}>
-    <Image source={icon} style={[styles.navIcon, active && styles.navIconActive]} />
-    <Text style={styles.navLabel}>{label}</Text>
-  </View>
+const NavItem = ({ icon, label, active, onPress }) => (
+  <TouchableOpacity onPress={onPress}>
+    <View style={styles.navItem}>
+      <Image source={icon} style={[styles.navIcon, active && styles.navIconActive]} />
+      <Text style={styles.navLabel}>{label}</Text>
+    </View>
+  </TouchableOpacity>
 );
 
 const styles = StyleSheet.create({
@@ -139,33 +144,6 @@ const styles = StyleSheet.create({
     height: 28,
     marginHorizontal: 5,
   },
-  cardContainer: {
-    width: '90%',
-    height: 145,
-    alignSelf: 'center',
-    marginTop: 15,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  rectangleBehind: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#ffffff',
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-    zIndex: -1,
-  },
-  banner: {
-    width: '100%',
-    height: '100%',
-  },
-
   scrollSection: {
     paddingHorizontal: 15,
     marginTop: 20,
@@ -188,27 +166,11 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 4,
   },
-  imageCardWrapper: {
-    marginRight: 15,
-    width: 180,
-    height: 200,
-    borderRadius: 12,
-    backgroundColor: '#fff',           // ✅ พื้นหลังขาว
-    shadowColor: '#000',               // ✅ เงาสีดำ
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 6,                      // ✅ Android ใช้ elevation สำหรับเงา
-    overflow: 'hidden',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   imagePreview: {
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
   },
-  
   featureRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',

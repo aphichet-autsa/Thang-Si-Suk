@@ -50,7 +50,7 @@ const LoginScreen = () => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, loginEmail, trimmedPassword);
       Alert.alert('เข้าสู่ระบบสำเร็จ!', `Welcome ${userCredential.user.email}`);
-      router.replace('/Home'); 
+      router.replace('/home'); 
     } catch (error) {
       Alert.alert('เข้าสู่ระบบล้มเหลว', error.message);
     }
@@ -100,7 +100,7 @@ const LoginScreen = () => {
                 </TouchableOpacity>
               </View>
 
-              <TouchableOpacity onPress={() => Alert.alert('เปลี่ยนรหัสผ่าน')}>
+              <TouchableOpacity onPress={() => router.push('/forgotpassword')}>
                 <Text style={styles.forgot}>เปลี่ยนรหัสผ่าน</Text>
               </TouchableOpacity>
 

@@ -57,7 +57,7 @@ export default function RegisterShopScreen() {
         createdAt: new Date()
       });
       alert('สมัครร้านสำเร็จแล้ว!');
-      router.push('/shop');
+      router.push('/shop'); // Navigate to shop list page
     } catch (error) {
       console.error('บันทึกไม่สำเร็จ:', error);
     }
@@ -70,12 +70,12 @@ export default function RegisterShopScreen() {
         <Image source={require('../assets/logo2.png')} style={styles.logo} />
         <Text style={styles.headerText}>THANGSISUK</Text>
         <View style={styles.headerIcons}>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/location')}>
             <Image source={require('../assets/location.png')} style={styles.icon} />
           </TouchableOpacity>
-          <TouchableOpacity>
-            <Image source={require('../assets/logout.png')} style={styles.icon} />
-          </TouchableOpacity>
+           <TouchableOpacity style={styles.navItemCenter} onPress={() => router.push('/')}>
+              <Image source={require('../assets/logout.png')} style={styles.bottomIconCenter} />
+            </TouchableOpacity>
         </View>
       </View>
 
@@ -84,9 +84,6 @@ export default function RegisterShopScreen() {
         <View style={styles.titleRow}>
           <Image source={require('../assets/shop.png')} style={styles.shopIcon} />
           <Text style={styles.pageTitle}>ร้านรับซื้อ</Text>
-          <TouchableOpacity>
-            <Image source={require('../assets/edit.png')} style={styles.editIcon} />
-          </TouchableOpacity>
         </View>
         <Text style={styles.subtitle}>กรอกรายละเอียด</Text>
 
@@ -115,6 +112,7 @@ export default function RegisterShopScreen() {
           <TextInput placeholder="รหัสไปรษณีย์" style={styles.inputHalf} value={zipcode} onChangeText={setZipcode} keyboardType="numeric" />
           <TextInput placeholder="เบอร์ติดต่อ" style={styles.inputHalf} value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
         </View>
+
         {/* Pin address */}
         <View style={styles.pinInput}>
           <Image source={require('../assets/pin.png')} style={styles.pinIcon} />
@@ -128,7 +126,7 @@ export default function RegisterShopScreen() {
         <TextInput placeholder="รายละเอียดของที่รับ" style={styles.input} value={category} onChangeText={setCategory} />
         <TextInput placeholder="รายละเอียดเพิ่มเติม" style={styles.input} value={detail} onChangeText={setDetail} />
 
-        {/* Image Picker ตรงปุ่มเพิ่มรูปภาพของคุณ */}
+        {/* Image Picker */}
         <View style={{ marginVertical: 12 }}>
           <ImagePickerComponent images={images} setImages={setImages} />
         </View>
@@ -146,22 +144,22 @@ export default function RegisterShopScreen() {
 
       {/* Bottom Navigation Bar */}
       <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem}>
+        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/home')}>
           <Image source={require('../assets/home-2.png')} style={styles.bottomIcon} />
           <Text style={styles.bottomText}>หน้าแรก</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
+        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/shop')}>
           <Image source={require('../assets/shop.png')} style={styles.bottomIcon} />
           <Text style={styles.bottomText}>ร้านรับซื้อ</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItemCenter}>
+        <TouchableOpacity style={styles.navItemCenter} onPress={() => router.push('/addshop')}>
           <Image source={require('../assets/plus.png')} style={styles.bottomIconCenter} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
+        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/')}>
           <Image source={require('../assets/location.png')} style={styles.bottomIcon} />
           <Text style={styles.bottomText}>ร้านใกล้ฉัน</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
+        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/')}>
           <Image source={require('../assets/user.png')} style={styles.bottomIcon} />
           <Text style={styles.bottomText}>อื่น</Text>
         </TouchableOpacity>
@@ -181,12 +179,11 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8, marginBottom: 6 },
   shopIcon: { width: 28, height: 28, marginRight: 8 },
   pageTitle: { fontWeight: 'bold', fontSize: 18 },
-  editIcon: { width: 20, height: 20, marginLeft: 'auto' },
   subtitle: { textAlign: 'center', fontWeight: 'bold', fontSize: 16, marginVertical: 8 },
   imageContainer: { alignItems: 'center', marginBottom: 18 },
   profileImageBtn: { justifyContent: 'center', alignItems: 'center' },
   profileImage: { width: 90, height: 90, borderRadius: 45, borderWidth: 2, borderColor: '#00000', backgroundColor: 'white' },
-  profileImageOverlay: { position: 'absolute', width: 90, height: 90, borderRadius: 45, justifyContent: 'center', alignItems: 'center'},
+  profileImageOverlay: { position: 'absolute', width: 90, height: 90, borderRadius: 45, justifyContent: 'center', alignItems: 'center' },
   plusIcon: { width: 38, height: 38, opacity: 0.7 },
   input: { backgroundColor: 'white', padding: 10, borderRadius: 8, marginBottom: 10, borderWidth: 1, borderColor: '#222', fontSize: 15 },
   row: { flexDirection: 'row', justifyContent: 'space-between' },
@@ -194,9 +191,6 @@ const styles = StyleSheet.create({
   pinInput: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'white', paddingVertical: 10, paddingHorizontal: 12, borderRadius: 8, marginBottom: 10, borderWidth: 1, borderColor: '#222' },
   pinIcon: { width: 22, height: 22, marginRight: 6 },
   pinTextInput: { flex: 1, fontSize: 15 },
-  uploadButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'white', padding: 12, borderRadius: 8, justifyContent: 'center', marginBottom: 18, borderWidth: 1, borderColor: '#222' },
-  uploadIcon: { width: 28, height: 28, marginRight: 8 },
-  uploadText: { fontWeight: 'bold', fontSize: 15 },
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'center',

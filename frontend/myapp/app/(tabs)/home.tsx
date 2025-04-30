@@ -7,7 +7,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      router.replace('/Home');
+      router.replace('/home');
     }, 0); // 3 วินาที
 
     return () => clearTimeout(timer); // เคลียร์เวลาเมื่อ component หาย
