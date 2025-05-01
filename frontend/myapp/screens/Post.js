@@ -1,15 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Image, FlatList, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Image, FlatList, Modal, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import * as Location from 'expo-location'; // import expo-location
+import MapView, { Marker } from 'react-native-maps'; // For displaying the map
+import { HeaderOnly, BottomNavOnly } from '../components/header'; // Import Header and Bottom Navigation
 
 export default function PostScreen() {
   const router = useRouter();
   const [images, setImages] = useState([]); // เก็บภาพที่เลือก
   const [caption, setCaption] = useState('');
-  const [hasPermission, setHasPermission] = useState(null);
+  const [hasPermission, setHasPermission] = useState(false); // เปลี่ยนเป็น boolean
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(null); // เลือกภาพที่จะลบหรือแก้ไข
+  const [location, setLocation] = useState(null); // เก็บตำแหน่ง
+  const [locationName, setLocationName] = useState(''); // เก็บชื่อสถานที่จาก Reverse Geocoding
+  const [region, setRegion] = useState(null); // สำหรับการตั้งแผนที่
 
   useEffect(() => {
     const checkPermissions = async () => {
@@ -26,6 +32,12 @@ export default function PostScreen() {
       if (mediaStatus !== 'granted') {
         alert('กรุณาอนุญาตให้เข้าถึงแกลเลอรี');
       }
+
+      // ตรวจสอบสิทธิ์การเข้าถึงตำแหน่ง
+      const { status: locationStatus } = await Location.requestForegroundPermissionsAsync();
+      if (locationStatus !== 'granted') {
+        alert('ไม่สามารถเข้าถึงตำแหน่ง');
+      }
     };
     checkPermissions();
   }, []);
@@ -38,11 +50,8 @@ export default function PostScreen() {
         mediaTypes: ImagePicker.MediaTypeImages,
       });
 
-      console.log("Camera result:", result);  // ตรวจสอบผลลัพธ์จากการถ่ายภาพ
       if (!result.cancelled && result.assets && result.assets[0].uri) {
         setImages((prev) => [...prev, result.assets[0].uri]);  // ดึง URI จาก assets[0].uri
-      } else {
-        console.log("ไม่สามารถรับ URI ได้จากกล้อง");
       }
     } else {
       alert('กรุณาอนุญาตให้ใช้กล้อง หรือภาพเกินจำนวนที่กำหนด');
@@ -57,26 +66,51 @@ export default function PostScreen() {
         mediaTypes: ImagePicker.MediaTypeImages,
       });
 
-      console.log("Gallery result:", result); // ตรวจสอบผลลัพธ์จากการเลือกภาพ
       if (!result.cancelled && result.assets && result.assets[0].uri) {
         setImages((prev) => [...prev, result.assets[0].uri]);  // ดึง URI จาก assets[0].uri
-      } else {
-        console.log("ไม่สามารถรับ URI ได้จากแกลเลอรี");
       }
     } else {
       alert('กรุณาอนุญาตให้เข้าถึงแกลเลอรี หรือภาพเกินจำนวนที่กำหนด');
     }
   };
 
-  const renderImageItem = ({ item, index }) => {
-    return (
-      <TouchableOpacity onPress={() => handleImagePress(index)}>
-        <View style={styles.imageContainer}>
-          <Image source={{ uri: item }} style={styles.image} resizeMode="cover" />
-        </View>
-      </TouchableOpacity>
-    );
+  const getLocation = async () => {
+    let { coords } = await Location.getCurrentPositionAsync({});
+    setLocation(coords);
+    // ตั้งแผนที่ตามตำแหน่งที่ได้รับ
+    setRegion({
+      latitude: coords.latitude,
+      longitude: coords.longitude,
+      latitudeDelta: 0.0922,
+      longitudeDelta: 0.0421,
+    });
+
+    const geocode = await Location.reverseGeocodeAsync({
+      latitude: coords.latitude,
+      longitude: coords.longitude,
+    });
+
+    if (geocode.length > 0) {
+      const locationData = geocode[0];
+      const locationString = `${locationData.city || ''} ${locationData.region || ''} ${locationData.country || ''}`;
+      setLocationName(locationString); // เก็บชื่อสถานที่ที่ได้
+    }
   };
+
+  const openMap = () => {
+    if (location) {
+      const url = `https://www.google.com/maps?q=${location.latitude},${location.longitude}`;
+      Linking.openURL(url); // เปิด Google Maps เพื่อดูเส้นทาง
+    }
+  };
+
+  const renderImageItem = ({ item, index }) => (
+    <TouchableOpacity onPress={() => handleImagePress(index)}>
+      <View style={styles.imageContainer}>
+        <Image source={{ uri: item }} style={styles.image} resizeMode="cover" />
+      </View>
+    </TouchableOpacity>
+  );
 
   const handleImagePress = (index) => {
     setSelectedImageIndex(index);
@@ -93,7 +127,6 @@ export default function PostScreen() {
   };
 
   const handleSave = () => {
-    // สามารถเพิ่มการแก้ไขภาพที่นี่
     setModalVisible(false);
   };
 
@@ -107,6 +140,9 @@ export default function PostScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
+      {/* 🔥 Add HeaderOnly component */}
+      <HeaderOnly />
+
       {/* 🔥 SubHeader */}
       <View style={styles.subHeader}>
         <TouchableOpacity onPress={() => router.back()}>
@@ -145,8 +181,25 @@ export default function PostScreen() {
 
         {/* เพิ่มตำแหน่ง */}
         <View style={styles.locationRow}>
-          <Image source={require('../assets/location.png')} style={styles.locationIcon} />
-          <Text style={styles.addLocation}>เพิ่มตำแหน่งของคุณ</Text>
+          <TouchableOpacity onPress={getLocation}>
+            <Image source={require('../assets/location.png')} style={styles.locationIcon} />
+          </TouchableOpacity>
+          {location ? (
+            <Text style={styles.addLocation}>
+              {locationName ? locationName : `ตำแหน่งของคุณ: ${location.latitude}, ${location.longitude}`}
+            </Text>
+          ) : (
+            <Text style={styles.addLocation}>เพิ่มตำแหน่งของคุณ</Text>
+          )}
+        </View>
+
+        {/* ปุ่มดูเส้นทาง */}
+        <View style={styles.locationRow}>
+          {location && (
+            <TouchableOpacity style={styles.openMapButton} onPress={openMap}>
+              <Text style={styles.buttonText}>ดูเส้นทาง</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={styles.buttonContainer}>
@@ -164,7 +217,7 @@ export default function PostScreen() {
         visible={modalVisible}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setModalVisible(false)}>
+        onRequestClose={() => setModalVisible(false)} >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text>คุณต้องการทำอะไรกับภาพนี้?</Text>
@@ -177,6 +230,9 @@ export default function PostScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* 🔥 Add BottomNavOnly component */}
+      <BottomNavOnly />
     </View>
   );
 }
@@ -247,6 +303,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
   },
+  openMapButton: {
+    backgroundColor: '#007BFF',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    marginTop: 10,
+  },
+  buttonText: {
+    fontSize: 16,
+    color: '#fff',
+  },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -267,10 +334,6 @@ const styles = StyleSheet.create({
     padding: 15,
     alignItems: 'center',
     borderRadius: 10,
-  },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
   },
   modalContainer: {
     flex: 1,
