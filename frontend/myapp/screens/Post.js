@@ -75,9 +75,8 @@ export default function PostScreen() {
   };
 
   const getLocation = async () => {
-    let { coords } = await Location.getCurrentPositionAsync({});
+    let { coords } = await Location.getCurrentPositionAsync({}); 
     setLocation(coords);
-    // ตั้งแผนที่ตามตำแหน่งที่ได้รับ
     setRegion({
       latitude: coords.latitude,
       longitude: coords.longitude,
@@ -140,16 +139,14 @@ export default function PostScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
-      {/* 🔥 Add HeaderOnly component */}
       <HeaderOnly />
 
-      {/* 🔥 SubHeader */}
+      {/* SubHeader */}
       <View style={styles.subHeader}>
         <TouchableOpacity onPress={() => router.back()}>
           <Image source={require('../assets/back.png')} style={styles.smallIcon} />
         </TouchableOpacity>
-        <Text style={styles.subHeaderTitle}>โพสต์</Text>
-        {/* ไอคอนกล้องและรูปภาพ */}
+        <Text style={styles.subHeaderTitle}>โพสต์ </Text>
         <View style={styles.iconContainer}>
           <TouchableOpacity onPress={openCamera}>
             <Image source={require('../assets/camera.png')} style={styles.smallIcon} />
@@ -160,7 +157,7 @@ export default function PostScreen() {
         </View>
       </View>
 
-      {/* 🔥 ScrollView ส่วนกลาง */}
+      {/* ScrollView ส่วนกลาง */}
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <TextInput
           style={styles.captionInput}
@@ -169,8 +166,7 @@ export default function PostScreen() {
           onChangeText={setCaption}
           multiline
         />
-
-        {/* แสดงภาพที่เลือก */}
+        
         <FlatList
           data={images}
           renderItem={renderImageItem}
@@ -179,7 +175,6 @@ export default function PostScreen() {
           style={styles.imageList}
         />
 
-        {/* เพิ่มตำแหน่ง */}
         <View style={styles.locationRow}>
           <TouchableOpacity onPress={getLocation}>
             <Image source={require('../assets/location.png')} style={styles.locationIcon} />
@@ -193,7 +188,6 @@ export default function PostScreen() {
           )}
         </View>
 
-        {/* ปุ่มดูเส้นทาง */}
         <View style={styles.locationRow}>
           {location && (
             <TouchableOpacity style={styles.openMapButton} onPress={openMap}>
@@ -231,7 +225,6 @@ export default function PostScreen() {
         </View>
       </Modal>
 
-      {/* 🔥 Add BottomNavOnly component */}
       <BottomNavOnly />
     </View>
   );
@@ -251,16 +244,17 @@ const styles = StyleSheet.create({
   subHeaderTitle: {
     fontSize: 25,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#000000',
   },
   smallIcon: {
-    width: 40,
-    height: 40,
+    width: 30,  // ขนาดที่เล็กลงสำหรับไอคอน
+    height: 30,
   },
   iconContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: 90,
+    justifyContent: 'space-around', // เปลี่ยนจาก 'space-between' เป็น 'space-around' เพื่อให้ไอคอนมีระยะห่างที่เหมาะสม
+    width: 120,  // กำหนดความกว้างให้เหมาะสม
+    paddingHorizontal: 10,  // เพิ่ม padding ระหว่างไอคอน
   },
   scrollContent: {
     padding: 20,
