@@ -146,7 +146,7 @@ function ContractScreen() {
                 onChangeText2={setBackupPhone}
               />
 
-              <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+              <TouchableOpacity style={styles.button} onPress={() => router.push('/login')}>
                 <Text style={styles.buttonText}>ยืนยัน</Text>
               </TouchableOpacity>
             </View>

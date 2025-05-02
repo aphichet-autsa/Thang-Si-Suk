@@ -15,22 +15,40 @@ import { useRouter } from 'expo-router';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../config/firebase-config';
 
+// ฟังก์ชันตรวจสอบอีเมล
+const validateEmail = (email) => {
+  const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+  return emailRegex.test(email);
+};
+
 export default function ForgotPasswordScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleResetPassword = async () => {
-    if (!email) {
-      Alert.alert('กรุณากรอกอีเมล');
+    // ตรวจสอบอีเมล
+    if (!email || !validateEmail(email)) {
+      Alert.alert('กรุณากรอกอีเมลที่ถูกต้อง');
       return;
     }
+
+    setLoading(true);
 
     try {
       await sendPasswordResetEmail(auth, email);
       Alert.alert('ส่งอีเมลสำเร็จ', 'โปรดตรวจสอบกล่องจดหมายของคุณ');
       router.replace('/login');
     } catch (error) {
-      Alert.alert('เกิดข้อผิดพลาด', error.message);
+      let errorMessage = 'เกิดข้อผิดพลาดกรุณาลองใหม่';
+      if (error.code === 'auth/invalid-email') {
+        errorMessage = 'อีเมลไม่ถูกต้อง';
+      } else if (error.code === 'auth/user-not-found') {
+        errorMessage = 'อีเมลนี้ไม่พบในระบบ';
+      }
+      Alert.alert('เกิดข้อผิดพลาด', errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -47,7 +65,7 @@ export default function ForgotPasswordScreen() {
           <View style={styles.whiteBox}>
             <Text style={styles.header}>เปลี่ยนรหัสผ่าน</Text>
             <Text style={styles.subtext}>
-            กรุณากรอกอีเมล เพื่อรับรหัสยืนยันการเเก้ไขรหัสผ่าน
+              กรุณากรอกอีเมล เพื่อรับรหัสยืนยันการเเก้ไขรหัสผ่าน
             </Text>
 
             <View style={styles.inputContainer}>
@@ -62,8 +80,12 @@ export default function ForgotPasswordScreen() {
               />
             </View>
 
-            <TouchableOpacity style={styles.button} onPress={handleResetPassword}>
-              <Text style={styles.buttonText}>ยืนยัน</Text>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={handleResetPassword}
+              disabled={loading}
+            >
+              <Text style={styles.buttonText}>{loading ? 'กำลังส่ง...' : 'ยืนยัน'}</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
