@@ -55,8 +55,8 @@ export default function HomeScreen() {
           {/* Feature Buttons */}
           <View style={styles.featureRow}>
             <FeatureButton title="ร้านรับซื้อ" icon={require('../assets/bg-home.png')} onPress={() => router.push('/shop')} />
-            <FeatureButton title="โพสต์ซื้อขาย" icon={require('../assets/excellent.png')} onPress={() => router.push('/Post')} />
-            <FeatureButton title="บริจาค" icon={require('../assets/fundraising.png')} onPress={() => router.push('/Post')} />
+            <FeatureButton title="โพสต์ซื้อขาย" icon={require('../assets/excellent.png')} onPress={() => router.push('/look')} />
+            <FeatureButton title="บริจาค" icon={require('../assets/fundraising.png')} onPress={() => router.push('/look')} />
           </View>
 
           {/* Scrollable Cards for Infographic Images (Vertical) */}
@@ -73,7 +73,7 @@ export default function HomeScreen() {
         <View style={styles.navBar}>
           <NavItem icon={require('../assets/home-2.png')} label="หน้าแรก" active />
           <NavItem icon={require('../assets/shop.png')} label="ร้านรับซื้อ" onPress={() => router.push('/shop')} />
-         <TouchableOpacity style={styles.navItemCenter} onPress={() => router.push('/Post')}>
+         <TouchableOpacity style={styles.navItemCenter} onPress={() => router.push('/post')}>
                    <Image source={require('../assets/plus.png')} style={styles.bottomIconCenter} />
           </TouchableOpacity>
           <NavItem icon={require('../assets/location.png')} label="ร้านใกล้ฉัน" active />
