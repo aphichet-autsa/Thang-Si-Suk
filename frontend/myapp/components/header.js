@@ -1,27 +1,8 @@
+import React from 'react';
+import { View, TouchableOpacity, Image, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 
-// ✅ Header ส่วนบน
-export function HeaderOnly() {
-  return (
-    <View style={styles.header}>
-      {/* Logo + THANGSISUK */}
-      <View style={styles.leftGroup}>
-        <Image source={require('../assets/logo2.png')} style={styles.logo} />
-        <Text style={styles.headerTitle}>THANGSISUK</Text>
-      </View>
-
-      {/* Location + Logout Icons */}
-      <View style={styles.rightGroup}>
-        <Image source={require('../assets/location.png')} style={styles.icon} />
-        <Image source={require('../assets/logout.png')} style={styles.icon} />
-      </View>
-    </View>
-  );
-}
-
-// ✅ Bottom Navigation Bar
-export function BottomNavOnly() {
+const BottomNav = () => {
   const router = useRouter();
 
   return (
@@ -31,72 +12,39 @@ export function BottomNavOnly() {
         <Text style={styles.navLabel}>หน้าแรก</Text>
       </TouchableOpacity>
 
-      <View style={styles.navItem}>
+      <TouchableOpacity style={styles.navItem} onPress={() => router.push('/shop')}>
         <Image source={require('../assets/shop.png')} style={styles.navIcon} />
         <Text style={styles.navLabel}>ร้านรับซื้อ</Text>
-      </View>
-
-      <TouchableOpacity style={styles.addButton} onPress={() => router.push('/Post')}>
-        <Image source={require('../assets/plus.png')} style={{ width: 30, height: 30 }} />
       </TouchableOpacity>
 
-      <View style={styles.navItem}>
+      <TouchableOpacity style={styles.navItemCenter} onPress={() => router.push('/Post')}>
+        <Image source={require('../assets/plus.png')} style={styles.bottomIconCenter} />
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.navItem} onPress={() => router.push('/')}>
         <Image source={require('../assets/location.png')} style={styles.navIcon} />
         <Text style={styles.navLabel}>ร้านใกล้ฉัน</Text>
-      </View>
+      </TouchableOpacity>
 
-      <View style={styles.navItem}>
+      <TouchableOpacity style={styles.navItem} onPress={() => router.push('/')}>
         <Image source={require('../assets/test-account.png')} style={styles.navIcon} />
         <Text style={styles.navLabel}>ฉัน</Text>
-      </View>
+      </TouchableOpacity>
     </View>
   );
-}
+};
 
-// ✅ styles (ก๊อปที่คุณมีอยู่มาใส่ได้เลย)
 const styles = StyleSheet.create({
-  header: {
-    backgroundColor: '#B7E305',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 15,
-    paddingTop: 40,
-    paddingBottom: 10,
-  },
-  leftGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  rightGroup: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  logo: {
-    width: 50,
-    height: 50,
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#000',
-  },
-  icon: {
-    width: 28,
-    height: 28,
-  },
   navBar: {
-    position: 'absolute',
-    bottom: 0,
-    flexDirection: 'row',
     backgroundColor: '#fff',
-    height: 70,
-    width: '100%',
+    flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
+    paddingVertical: 12,
+    width: '100%',
     borderTopWidth: 1,
     borderColor: '#ddd',
+    elevation: 8,
   },
   navItem: {
     alignItems: 'center',
@@ -109,14 +57,24 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 2,
   },
-  addButton: {
-    backgroundColor: '#B7E305',
-    width: 55,
-    height: 55,
-    borderRadius: 30,
-    alignItems: 'center',
+  navItemCenter: {
     justifyContent: 'center',
-    marginTop: -20,
-    elevation: 5,
+    alignItems: 'center',
+    marginTop: -16,
+    backgroundColor: '#B7E305', // สีพื้นหลังของปุ่มตรงกลาง
+    borderRadius: 30,
+    width: 60,
+    height: 60,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 4,
   },
-}); 
+  bottomIconCenter: {
+    width: 30,
+    height: 30,
+  },
+});
+
+export default BottomNav;

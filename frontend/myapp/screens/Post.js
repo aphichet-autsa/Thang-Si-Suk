@@ -5,6 +5,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location'; // import expo-location
 import MapView, { Marker } from 'react-native-maps'; // For displaying the map
 import { HeaderOnly, BottomNavOnly } from '../components/header'; // Import Header and Bottom Navigation
+import ImagePickerComponent from '../components/ImagePickerComponent';
 
 export default function PostScreen() {
   const router = useRouter();

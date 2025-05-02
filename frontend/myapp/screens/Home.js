@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -7,18 +7,24 @@ import {
   ScrollView,
   ImageBackground,
   TouchableOpacity,
-} from 'react-native';
-import { useRouter } from 'expo-router';  // ใช้สำหรับการนำทางใน Expo
+} from "react-native";
+import { useRouter } from "expo-router";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../config/firebase-config"; // Firebase Config
 
 export default function HomeScreen() {
   const router = useRouter(); // สร้างตัวแปรเพื่อใช้ใน router
+  const [images, setImages] = useState([]);
 
-  const imageSources = [
-    require('../assets/bin-card.png'),
-    require('../assets/image15.png'),
-    require('../assets/image16.png'),
-    require('../assets/image17.png'),
-  ];
+  useEffect(() => {
+    fetchImages();
+  }, []);
+
+  const fetchImages = async () => {
+    const querySnapshot = await getDocs(collection(db, "knowledges"));
+    const imageData = querySnapshot.docs.map((doc) => doc.data());
+    setImages(imageData);
+  };
 
   return (
     <ImageBackground style={styles.background} resizeMode="cover">
@@ -30,22 +36,18 @@ export default function HomeScreen() {
             <Text style={styles.headerTitle}>THANGSISUK</Text>
             <View style={styles.headerIcons}>
               <Image source={require('../assets/location.png')} style={styles.iconSmall} />
-              <TouchableOpacity style={styles.navItemCenter} onPress={() => router.push('/')}>
-                   <Image source={require('../assets/logout.png')} style={styles.bottomIconCenter} />
-              </TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push('/')} >
+                  <Image source={require('../assets/logout.png')} style={{ width: 24, height: 24 }} />
+            </TouchableOpacity>
             </View>
           </View>
 
-          {/* Scrollable Cards */}
+          {/* Scrollable Cards for Banner Images (Horizontal) */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollSection}>
-            {imageSources.map((source, index) => (
-              <View key={index} style={styles.imageCard}>
+            {images.filter((image) => image.position === "top").map((image, index) => (
+              <View key={index} style={styles.imageCardTop}>
                 <View style={styles.cardShadow} />
-                <Image
-                  source={source}
-                  style={styles.imagePreview}
-                  resizeMode="cover"
-                />
+                <Image source={{ uri: image.imageUrl }} style={styles.imagePreviewTop} resizeMode="cover" />
               </View>
             ))}
           </ScrollView>
@@ -53,32 +55,25 @@ export default function HomeScreen() {
           {/* Feature Buttons */}
           <View style={styles.featureRow}>
             <FeatureButton title="ร้านรับซื้อ" icon={require('../assets/bg-home.png')} onPress={() => router.push('/shop')} />
-            <FeatureButton title="โพสต์ซื้อขาย" icon={require('../assets/excellent.png')} onPress={() => router.push('/look')} />
-            <FeatureButton title="บริจาค" icon={require('../assets/fundraising.png')} onPress={() => router.push('/post')} />
+            <FeatureButton title="โพสต์ซื้อขาย" icon={require('../assets/excellent.png')} onPress={() => router.push('/Post')} />
+            <FeatureButton title="บริจาค" icon={require('../assets/fundraising.png')} onPress={() => router.push('/Post')} />
           </View>
 
-          {/* Poster Row 1 */}
-          <View style={styles.posterGroup}>
-            <View style={styles.posterBackground} />
-            <View style={styles.posterRow}>
-              <Image source={require('../assets/poster1.png')} style={styles.posterLeft} />
-              <Image source={require('../assets/poster2.png')} style={styles.posterRight} />
-            </View>
-          </View>
-
-          {/* Poster Row 2 */}
-          <Image
-            source={require('../assets/poster3.png')}
-            style={styles.fullPoster}
-            resizeMode="contain"
-          />
+          {/* Scrollable Cards for Infographic Images (Vertical) */}
+          <ScrollView contentContainerStyle={styles.verticalScroll}>
+            {images.filter((image) => image.position === "bottom").map((image, index) => (
+              <View key={index} style={styles.imageCardBottom}>
+                <Image source={{ uri: image.imageUrl }} style={styles.imagePreviewBottom} resizeMode="cover" />
+              </View>
+            ))}
+          </ScrollView>
         </ScrollView>
 
         {/* Bottom Nav */}
         <View style={styles.navBar}>
           <NavItem icon={require('../assets/home-2.png')} label="หน้าแรก" active />
           <NavItem icon={require('../assets/shop.png')} label="ร้านรับซื้อ" onPress={() => router.push('/shop')} />
-         <TouchableOpacity style={styles.navItemCenter} onPress={() => router.push('/post')}>
+         <TouchableOpacity style={styles.navItemCenter} onPress={() => router.push('/Post')}>
                    <Image source={require('../assets/plus.png')} style={styles.bottomIconCenter} />
           </TouchableOpacity>
           <NavItem icon={require('../assets/location.png')} label="ร้านใกล้ฉัน" active />
@@ -104,7 +99,6 @@ const NavItem = ({ icon, label, active, onPress }) => (
     </View>
   </TouchableOpacity>
 );
-
 const styles = StyleSheet.create({
   background: {
     flex: 1,
@@ -148,13 +142,37 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     marginTop: 20,
   },
-  imageCard: {
+  verticalScroll: {
+    marginBottom: 20,
+    alignItems: 'center', // This will center images in vertical ScrollView
+  },
+  imageCardTop: {
     marginRight: 15,
-    width: 170,
-    height: 160,
+    width: 230,
+    height: 150, // Increased height for top images
     borderRadius: 12,
     overflow: 'hidden',
     position: 'relative',
+    alignSelf: 'center',
+  },
+  imageCardBottom: {
+    marginRight: 15,
+    width: 350,
+    height: 200, // Height for bottom images
+    borderRadius: 12,
+    overflow: 'hidden',
+    position: 'relative',
+    marginBottom: 10,
+  },
+  imagePreviewTop: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  imagePreviewBottom: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
   },
   cardShadow: {
     ...StyleSheet.absoluteFillObject,
@@ -165,11 +183,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 6,
     elevation: 4,
-  },
-  imagePreview: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
   },
   featureRow: {
     flexDirection: 'row',
@@ -238,7 +251,8 @@ const styles = StyleSheet.create({
   navBar: {
     backgroundColor: '#fff',
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-around', // จัดให้ปุ่มกระจายออกจากกัน
+    alignItems: 'center', // จัดปุ่มในแนวตั้งให้ตรงกลาง
     paddingVertical: 12,
     width: '100%',
     borderTopWidth: 1,
@@ -247,19 +261,33 @@ const styles = StyleSheet.create({
   },
   navItem: {
     alignItems: 'center',
+    flex: 1, // ให้แต่ละปุ่มใช้พื้นที่เท่ากัน
+    justifyContent: 'center', // จัดตำแหน่งปุ่มในแนวตั้ง
   },
   navIcon: {
     width: 30,
     height: 30,
     tintColor: '#000',
   },
-  navIconActive: {
-    tintColor: '#000',
+  navItemCenter: {
+    justifyContent: 'center', // Center the middle button vertically and horizontally
+    alignItems: 'center',
+    marginTop: -16,
+    backgroundColor: '#fff',
+    borderRadius: 30,
+    width: 60,
+    height: 60,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 4,
   },
   navLabel: {
     fontSize: 11,
     marginTop: 3,
   },
+
   addButton: {
     backgroundColor: '#fff',
     borderRadius: 30,
