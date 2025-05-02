@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
-import { View, Image, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+import React from 'react';
+import { TouchableOpacity, Image, ScrollView, StyleSheet } from 'react-native';
 
 export default function ImagePickerComponent({ images, setImages }) {
   const pickImages = async () => {
@@ -11,9 +10,9 @@ export default function ImagePickerComponent({ images, setImages }) {
       selectionLimit: 5,
     });
 
-    if (!result.canceled) {
+    if (!result.cancelled) {
       const selected = result.assets.map(asset => asset.uri);
-      setImages([...images, ...selected]);
+      setImages([...images, ...selected]); // อัพเดต array images
     }
   };
 
