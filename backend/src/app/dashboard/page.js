@@ -33,7 +33,7 @@ const Dashboard = () => {
         const userCount = usersSnapshot.size;
         
         // ดึงข้อมูลอื่นๆ (ตัวอย่าง)
-        // const shopsSnapshot = await getDocs(collection(db, "shops"));
+        const shopsSnapshot = await getDocs(collection(db, "shops"));
         // const postsSnapshot = await getDocs(collection(db, "posts"));
         
         setStats({
