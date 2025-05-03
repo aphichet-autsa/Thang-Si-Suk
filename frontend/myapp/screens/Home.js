@@ -1,87 +1,81 @@
 import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  Image,
-  StyleSheet,
-  ScrollView,
-  ImageBackground,
-  TouchableOpacity,
-} from "react-native";
-import { useRouter } from "expo-router";
+import { View, Text, Image, StyleSheet, ScrollView, ImageBackground, TouchableOpacity } from "react-native";
+import { useNavigation } from "@react-navigation/native"; // ใช้ useNavigation จาก react-navigation
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../config/firebase-config"; // Firebase Config
+import Header from '../components/header';  // นำเข้า Header Component
+import BottomNav from '../components/BottomNav';  // นำเข้า BottomNav Component
 
 export default function HomeScreen() {
-  const router = useRouter(); // สร้างตัวแปรเพื่อใช้ใน router
-  const [images, setImages] = useState([]);
+  const navigation = useNavigation(); // ใช้ useNavigation hook
+  const [images, setImages] = useState([]);  // เก็บภาพที่ได้จาก Firestore
+  const [loading, setLoading] = useState(true);  // เพิ่ม state สำหรับการโหลดข้อมูล
 
   useEffect(() => {
     fetchImages();
   }, []);
 
   const fetchImages = async () => {
-    const querySnapshot = await getDocs(collection(db, "knowledges"));
-    const imageData = querySnapshot.docs.map((doc) => doc.data());
-    setImages(imageData);
+    try {
+      const querySnapshot = await getDocs(collection(db, "knowledges"));
+      const imageData = querySnapshot.docs.map((doc) => doc.data());
+      setImages(imageData);  // เซตข้อมูลภาพลงใน state
+      setLoading(false);  // อัปเดต state ให้หยุดการโหลด
+    } catch (error) {
+      console.error("Error fetching images: ", error);
+      setLoading(false);  // กรณีเกิดข้อผิดพลาดก็หยุดการโหลด
+    }
   };
+
+  if (loading) {
+    return <Text>กำลังโหลด...</Text>;  // แสดงข้อความกำลังโหลดหากข้อมูลยังไม่ได้รับ
+  }
 
   return (
     <ImageBackground style={styles.background} resizeMode="cover">
       <View style={styles.wrapper}>
         <ScrollView contentContainerStyle={styles.container}>
-          {/* Header */}
-          <View style={styles.header}>
-            <Image source={require('../assets/logo2.png')} style={styles.logo} />
-            <Text style={styles.headerTitle}>THANGSISUK</Text>
-            <View style={styles.headerIcons}>
-              <Image source={require('../assets/location.png')} style={styles.iconSmall} />
-              <TouchableOpacity onPress={() => router.push('/')} >
-                <Image source={require('../assets/logout.png')} style={{ width: 24, height: 24 }} />
-              </TouchableOpacity>
-            </View>
-          </View>
+          <Header /> {/* เรียกใช้ Header Component */}
 
           {/* Scrollable Cards for Banner Images (Horizontal) */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollSection}>
             {images.filter((image) => image.position === "top").map((image, index) => (
               <View key={index} style={styles.imageCardTop}>
                 <View style={styles.cardShadow} />
-                <Image source={{ uri: image.imageUrl }} style={styles.imagePreviewTop} resizeMode="cover" />
+                {image.imageUrl ? (
+                  <Image source={{ uri: image.imageUrl }} style={styles.imagePreviewTop} resizeMode="cover" />
+                ) : (
+                  <Text style={styles.noImageText}>Image not available</Text>  {/* แสดงข้อความเมื่อไม่มี imageUrl */}
+                )}
               </View>
             ))}
           </ScrollView>
 
           {/* Feature Buttons */}
           <View style={styles.featureRow}>
-            <FeatureButton title="ร้านรับซื้อ" icon={require('../assets/bg-home.png')} onPress={() => router.push('/shop')} />
-            <FeatureButton title="โพสต์ซื้อขาย" icon={require('../assets/excellent.png')} onPress={() => router.push('/lookpost')} />
-            <FeatureButton title="บริจาค" icon={require('../assets/fundraising.png')} onPress={() => router.push('/lookpost')} />
+            <FeatureButton title="ร้านรับซื้อ" icon={require('../assets/bg-home.png')} onPress={() => navigation.navigate('Shop')} />
+            <FeatureButton title="โพสต์ซื้อขาย" icon={require('../assets/excellent.png')} onPress={() => navigation.navigate('LookPost')} />
+            <FeatureButton title="บริจาค" icon={require('../assets/fundraising.png')} onPress={() => navigation.navigate('LookPost')} />
           </View>
 
           {/* Scrollable Cards for Infographic Images (Vertical) */}
           <ScrollView contentContainerStyle={styles.verticalScroll}>
             {images.filter((image) => image.position === "bottom").map((image, index) => (
               <View key={index} style={styles.imageCardBottom}>
-                <Image source={{ uri: image.imageUrl }} style={styles.imagePreviewBottom} resizeMode="cover" />
+                {image.imageUrl ? (
+                  <Image source={{ uri: image.imageUrl }} style={styles.imagePreviewBottom} resizeMode="cover" />
+                ) : (
+                  <Text style={styles.noImageText}>Image not available</Text>  {/* แสดงข้อความเมื่อไม่มี imageUrl */}
+                )}
               </View>
             ))}
           </ScrollView>
         </ScrollView>
 
-        {/* Bottom Nav */}
-        <View style={styles.navBar}>
-          <NavItem icon={require('../assets/home-2.png')} label="หน้าแรก" active />
-          <NavItem icon={require('../assets/shop.png')} label="ร้านรับซื้อ" onPress={() => router.push('/shop')} />
-          <TouchableOpacity style={styles.navItemCenter} onPress={() => router.push('/post')}>
-            <Image source={require('../assets/plus.png')} style={styles.bottomIconCenter} />
-          </TouchableOpacity>
-          <NavItem icon={require('../assets/location.png')} label="ร้านใกล้ฉัน" active />
-          <NavItem icon={require('../assets/test-account.png')} label="ฉัน" />
-        </View>
+        <BottomNav /> {/* เรียกใช้ BottomNav Component */}
       </View>
     </ImageBackground>
-  );
+);
 }
 
 const FeatureButton = ({ title, icon, onPress }) => (
@@ -90,16 +84,6 @@ const FeatureButton = ({ title, icon, onPress }) => (
     <Text style={styles.featureText}>{title}</Text>
   </TouchableOpacity>
 );
-
-const NavItem = ({ icon, label, active, onPress }) => (
-  <TouchableOpacity onPress={onPress}>
-    <View style={styles.navItem}>
-      <Image source={icon} style={[styles.navIcon, active && styles.navIconActive]} />
-      <Text style={styles.navLabel}>{label}</Text>
-    </View>
-  </TouchableOpacity>
-);
-
 
 const styles = StyleSheet.create({
   background: {
@@ -113,45 +97,18 @@ const styles = StyleSheet.create({
   container: {
     paddingBottom: 100,
   },
-  header: {
-    backgroundColor: '#B7E305',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingTop: 40,
-    paddingBottom: 15,
-    justifyContent: 'space-between',
-  },
-  logo: {
-    width: 60,
-    height: 60,
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#000',
-  },
-  headerIcons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  iconSmall: {
-    width: 28,
-    height: 28,
-    marginHorizontal: 5,
-  },
   scrollSection: {
     paddingHorizontal: 15,
     marginTop: 20,
   },
   verticalScroll: {
     marginBottom: 20,
-    alignItems: 'center', // This will center images in vertical ScrollView
+    alignItems: 'center',
   },
   imageCardTop: {
     marginRight: 15,
     width: 230,
-    height: 150, // Increased height for top images
+    height: 150,
     borderRadius: 12,
     overflow: 'hidden',
     position: 'relative',
@@ -160,7 +117,7 @@ const styles = StyleSheet.create({
   imageCardBottom: {
     marginRight: 15,
     width: 350,
-    height: 200, // Height for bottom images
+    height: 200,
     borderRadius: 12,
     overflow: 'hidden',
     position: 'relative',
@@ -209,95 +166,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
-  posterGroup: {
-    position: 'relative',
-    marginTop: 15,
-  },
-  posterBackground: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    height: 180,
-    width: '90%',
-    alignSelf: 'center',
-    position: 'absolute',
-    top: 0,
-    zIndex: -1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  posterRow: {
-    flexDirection: 'row',
-    marginHorizontal: 20,
-    gap: 10,
-  },
-  posterLeft: {
-    width: '47%',
-    height: 160,
-    borderRadius: 10,
-  },
-  posterRight: {
-    width: '47%',
-    height: 160,
-    borderRadius: 10,
-  },
-  fullPoster: {
-    width: '90%',
-    height: 200,
-    borderRadius: 10,
-    alignSelf: 'center',
-    marginTop: 25,
-  },
-  navBar: {
-    backgroundColor: '#fff',
-    flexDirection: 'row',
-    justifyContent: 'space-around', // จัดให้ปุ่มกระจายออกจากกัน
-    alignItems: 'center', // จัดปุ่มในแนวตั้งให้ตรงกลาง
-    paddingVertical: 12,
-    width: '100%',
-    borderTopWidth: 1,
-    borderColor: '#ddd',
-    elevation: 8,
-  },
-  navItem: {
-    alignItems: 'center',
-    flex: 1, // ให้แต่ละปุ่มใช้พื้นที่เท่ากัน
-    justifyContent: 'center', // จัดตำแหน่งปุ่มในแนวตั้ง
-  },
-  navIcon: {
-    width: 30,
-    height: 30,
-    tintColor: '#000',
-  },
-  navItemCenter: {
-    justifyContent: 'center', // Center the middle button vertically and horizontally
-    alignItems: 'center',
-    marginTop: -16,
-    backgroundColor: '#fff',
-    borderRadius: 30,
-    width: 60,
-    height: 60,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  navLabel: {
-    fontSize: 11,
-    marginTop: 3,
-  },
-
-  addButton: {
-    backgroundColor: '#fff',
-    borderRadius: 30,
-    width: 55,
-    height: 55,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: -25,
-    elevation: 5,
+  noImageText: {
+    textAlign: 'center',
+    fontSize: 14,
+    color: '#777',
   },
 });

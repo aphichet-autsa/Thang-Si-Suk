@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Image, FlatList } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useNavigation } from '@react-navigation/native'; // ใช้ useNavigation hook จาก react-navigation
 import * as ImagePicker from 'expo-image-picker';
+import Header from '../components/header';  // นำเข้า Header Component
+import BottomNav from '../components/BottomNav';  // นำเข้า BottomNav Component
 
 export default function PostScreen() {
-  const router = useRouter();
+  const navigation = useNavigation(); // ใช้ useNavigation hook
   const [images, setImages] = useState([]); // เก็บภาพที่เลือก
   const [caption, setCaption] = useState('');
   const [hasPermission, setHasPermission] = useState(null);
@@ -85,8 +87,9 @@ export default function PostScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
       {/* 🔥 SubHeader */}
+      <Header /> {/* เรียกใช้ Header Component */}
       <View style={styles.subHeader}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>{/* ใช้ goBack ของ useNavigation */}
           <Image source={require('../assets/back.png')} style={styles.smallIcon} />
         </TouchableOpacity>
         <Text style={styles.subHeaderTitle}>โพสต์</Text>
@@ -135,6 +138,8 @@ export default function PostScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      <BottomNav /> {/* เรียกใช้ BottomNav Component */}
     </View>
   );
 }
