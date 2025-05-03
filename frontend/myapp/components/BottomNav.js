@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
   navBar: {
     backgroundColor: '#fff',
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between', // ใช้ space-between เพื่อให้ระยะห่างระหว่างปุ่มเท่ากัน
     alignItems: 'center',
     paddingVertical: 12,
     width: '100%',
@@ -45,9 +45,20 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     elevation: 8,
   },
-  navItem: { alignItems: 'center', flex: 1, justifyContent: 'center' },
-  navIcon: { width: 30, height: 30, tintColor: '#000' },
-  navIconActive: { tintColor: '#B7E305' },
+  navItem: { 
+    alignItems: 'center', 
+    flex: 1, 
+    justifyContent: 'center',
+    paddingHorizontal: 8, // เพิ่มระยะห่างระหว่างปุ่ม
+  },
+  navIcon: { 
+    width: 30, 
+    height: 30, 
+    tintColor: '#000' 
+  },
+  navIconActive: { 
+    tintColor: '#B7E305' 
+  },
   navItemCenter: {
     justifyContent: 'center',
     alignItems: 'center',
@@ -62,6 +73,12 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 4,
   },
-  bottomIconCenter: { width: 30, height: 30 },
-  navLabel: { fontSize: 11, marginTop: 3 },
+  bottomIconCenter: { 
+    width: 30, 
+    height: 30 
+  },
+  navLabel: { 
+    fontSize: 11, 
+    marginTop: 3 
+  },
 });
