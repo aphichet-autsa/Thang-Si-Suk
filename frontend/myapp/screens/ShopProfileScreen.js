@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
-import { HeaderOnly, BottomNavOnly } from '../components/header'; // นำเข้าคอมโพเนนต์ HeaderOnly และ BottomNavOnly
+import { Header } from '../components/header'; // นำเข้าคอมโพเนนต์ HeaderOnly และ BottomNavOnly
 
 // Social Link Component
 const SocialLink = ({ title, link }) => (
@@ -32,7 +32,7 @@ const ShopProfileScreen = () => {
   return (
     <View style={styles.container}>
       {/* ใช้ HeaderOnly จาก components */}
-      <HeaderOnly />
+      <Header />
 
       <ScrollView contentContainerStyle={styles.content}>
         {/* Profile Info */}
