@@ -3,14 +3,14 @@ import { View, Text, TextInput, TouchableOpacity, Image, ScrollView, StyleSheet,
 import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
 import { addDoc, collection } from 'firebase/firestore'; 
-import { db } from '../config/firebase-config'; // เชื่อม Firebase ของคุณ
+import { db } from '../config/firebase-config'; 
 import { useRouter } from 'expo-router';
-import * as ImageManipulator from 'expo-image-manipulator'; // สำหรับการปรับขนาดภาพ
+import * as ImageManipulator from 'expo-image-manipulator'; 
+import Header from '../components/header';  // นำเข้า Header Component
 
 export default function RegisterShopScreen() {
   const router = useRouter();
 
-  // ประกาศ state สำหรับจัดเก็บข้อมูลร้านและภาพ
   const [shopName, setShopName] = useState('');
   const [ownerName, setOwnerName] = useState('');
   const [address, setAddress] = useState('');
@@ -22,11 +22,10 @@ export default function RegisterShopScreen() {
   const [phone, setPhone] = useState('');
   const [category, setCategory] = useState('');
   const [detail, setDetail] = useState('');
-  const [profileImageUri, setProfileImageUri] = useState(null); // สำหรับเก็บ URI ของภาพโปรไฟล์
-  const [shopImageUri, setShopImageUri] = useState(null); // สำหรับเก็บ URI ของภาพร้าน
-  const [uploading, setUploading] = useState(false); // สำหรับการแสดงสถานะการอัปโหลด
+  const [profileImageUri, setProfileImageUri] = useState(null); 
+  const [shopImageUri, setShopImageUri] = useState(null); 
+  const [uploading, setUploading] = useState(false); 
 
-  // ฟังก์ชันการเลือกภาพจากแกลอรี่
   const handleImagePick = async (type) => {
     let permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (permissionResult.granted === false) {
@@ -43,17 +42,16 @@ export default function RegisterShopScreen() {
 
     if (!result.cancelled && result.uri) {
       const { uri } = result;
-      // ลดขนาดภาพก่อนเก็บ
       const manipResult = await ImageManipulator.manipulateAsync(
         uri,
-        [{ resize: { width: 800 } }], // ปรับขนาดความกว้างเป็น 800px
-        { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG } // ปรับความละเอียด
+        [{ resize: { width: 800 } }],
+        { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
       );
       
       if (type === 'profile') {
-        setProfileImageUri(manipResult.uri); // เก็บ URI ของภาพโปรไฟล์
+        setProfileImageUri(manipResult.uri); 
       } else if (type === 'shop') {
-        setShopImageUri(manipResult.uri); // เก็บ URI ของภาพร้าน
+        setShopImageUri(manipResult.uri); 
       }
     } else {
       alert('ไม่พบภาพที่เลือก');
@@ -69,7 +67,6 @@ export default function RegisterShopScreen() {
     setUploading(true);
     const formData = new FormData();
 
-    // สำหรับภาพโปรไฟล์
     const profileFileUri = profileImageUri;
     const profileFilename = profileFileUri.split('/').pop();
     const profileFileExtension = profileFilename.split('.').pop();
@@ -79,7 +76,7 @@ export default function RegisterShopScreen() {
       name: profileFilename,
       type: `image/${profileFileExtension}`,
     });
-    formData.append('upload_preset', 'shop123'); // ใช้ 'unsigned_upload' Preset
+    formData.append('upload_preset', 'shop123');
 
     try {
       const responseProfile = await axios.post(
@@ -88,9 +85,8 @@ export default function RegisterShopScreen() {
       );
 
       const profileImageUrl = responseProfile.data.secure_url;
-      console.log("Profile image uploaded successfully:", profileImageUrl);  // เพิ่มบรรทัดนี้
+      console.log("Profile image uploaded successfully:", profileImageUrl);
 
-      // สำหรับภาพรายละเอียดร้าน
       const shopFileUri = shopImageUri;
       const shopFilename = shopFileUri.split('/').pop();
       const shopFileExtension = shopFilename.split('.').pop();
@@ -107,9 +103,8 @@ export default function RegisterShopScreen() {
       );
 
       const shopImageUrl = responseShop.data.secure_url;
-      console.log("Shop image uploaded successfully:", shopImageUrl);  // เพิ่มบรรทัดนี้
+      console.log("Shop image uploaded successfully:", shopImageUrl);
 
-      // บันทึกข้อมูลร้านและภาพลงใน Firestore
       await addDoc(collection(db, 'shops'), {
         shopName,
         ownerName,
@@ -122,8 +117,8 @@ export default function RegisterShopScreen() {
         category,
         detail,
         pinAddress,
-        profileImageUrl, // เก็บ URL ของภาพโปรไฟล์
-        shopImageUrl,    // เก็บ URL ของภาพร้าน
+        profileImageUrl,
+        shopImageUrl,
         createdAt: new Date()
       });
 
@@ -135,10 +130,8 @@ export default function RegisterShopScreen() {
       console.error('Upload error: ', error);
       setUploading(false);
     }
-};
+  };
 
-
-  // ฟังก์ชันการบันทึกข้อมูลร้านค้าที่ Firestore
   const handleSubmit = async () => {
     if (
       !shopName.trim() ||
@@ -157,19 +150,14 @@ export default function RegisterShopScreen() {
       return;
     }
 
-    handleUpload(); // เมื่อกรอกข้อมูลครบแล้วจะเรียกใช้ฟังก์ชันอัปโหลด
+    handleUpload();
   };
 
   return (
     <View style={styles.root}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Image source={require('../assets/logo2.png')} style={styles.logo} />
-          <Text style={styles.headerText}>THANGSISUK</Text>
-        </View>
+        <Header /> {/* เรียกใช้ Header Component */}
 
-        {/* Form for shop details */}
         <Text style={styles.subtitle}>กรอกรายละเอียด</Text>
 
         {/* Profile Image Picker */}
@@ -182,7 +170,7 @@ export default function RegisterShopScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Inputs */}
+        {/* Form Inputs */}
         <TextInput placeholder="ชื่อร้าน" style={styles.input} value={shopName} onChangeText={setShopName} />
         <TextInput placeholder="ชื่อเจ้าของร้าน" style={styles.input} value={ownerName} onChangeText={setOwnerName} />
         <TextInput placeholder="ที่อยู่" style={styles.input} value={address} onChangeText={setAddress} />
@@ -219,12 +207,29 @@ export default function RegisterShopScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#fff' },
-  header: { flexDirection: 'row', alignItems: 'center', padding: 10, backgroundColor: '#B7E305' },
+  header: {
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    padding: 10, 
+    backgroundColor: '#B7E305', 
+    width: '100%',  // ทำให้ header เต็มหน้าจอ
+    marginLeft: 0,  // กำหนดค่า margin-left ให้เป็น 0 เพื่อให้แน่ใจว่าไม่มีการห่างจากขอบซ้าย
+    marginRight: 0, // กำหนดค่า margin-right ให้เป็น 0 เพื่อให้แน่ใจว่าไม่มีการห่างจากขอบขวา
+  },
   logo: { width: 40, height: 40 },
   headerText: { flex: 1, fontSize: 18, fontWeight: 'bold', marginLeft: 10 },
   scrollContainer: { padding: 20, paddingBottom: 30 },
   subtitle: { textAlign: 'center', fontWeight: 'bold', fontSize: 16, marginVertical: 8 },
-  input: { backgroundColor: 'white', padding: 10, borderRadius: 8, marginBottom: 10, borderWidth: 1, borderColor: '#222', fontSize: 15 },
+  input: {
+    backgroundColor: 'white',
+    paddingVertical: 8,  
+    paddingHorizontal: 12, 
+    borderRadius: 8,
+    marginBottom: 10,  
+    borderWidth: 1,
+    borderColor: '#222',
+    fontSize: 14,
+  },
   imagePickerContainer: { alignItems: 'center', marginBottom: 20 },
   profileImageBtn: { justifyContent: 'center', alignItems: 'center' },
   profileImage: { width: 100, height: 100, borderRadius: 50 },
