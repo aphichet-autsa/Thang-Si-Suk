@@ -11,6 +11,8 @@ import {
 import { useRouter } from "expo-router";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../config/firebase-config"; // Firebase Config
+import Header from '../components/header';  // นำเข้า Header Component
+import BottomNav from '../components/BottomNav';  // นำเข้า BottomNav Component
 
 export default function HomeScreen() {
   const router = useRouter(); // สร้างตัวแปรเพื่อใช้ใน router
@@ -30,17 +32,7 @@ export default function HomeScreen() {
     <ImageBackground style={styles.background} resizeMode="cover">
       <View style={styles.wrapper}>
         <ScrollView contentContainerStyle={styles.container}>
-          {/* Header */}
-          <View style={styles.header}>
-            <Image source={require('../assets/logo2.png')} style={styles.logo} />
-            <Text style={styles.headerTitle}>THANGSISUK</Text>
-            <View style={styles.headerIcons}>
-              <Image source={require('../assets/location.png')} style={styles.iconSmall} />
-              <TouchableOpacity onPress={() => router.push('/')} >
-                  <Image source={require('../assets/logout.png')} style={{ width: 24, height: 24 }} />
-            </TouchableOpacity>
-            </View>
-          </View>
+          <Header /> {/* เรียกใช้ Header Component */}
 
           {/* Scrollable Cards for Banner Images (Horizontal) */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollSection}>
@@ -69,16 +61,7 @@ export default function HomeScreen() {
           </ScrollView>
         </ScrollView>
 
-        {/* Bottom Nav */}
-        <View style={styles.navBar}>
-          <NavItem icon={require('../assets/home-2.png')} label="หน้าแรก" active />
-          <NavItem icon={require('../assets/shop.png')} label="ร้านรับซื้อ" onPress={() => router.push('/shop')} />
-         <TouchableOpacity style={styles.navItemCenter} onPress={() => router.push('/post')}>
-                   <Image source={require('../assets/plus.png')} style={styles.bottomIconCenter} />
-          </TouchableOpacity>
-          <NavItem icon={require('../assets/location.png')} label="ร้านใกล้ฉัน" active />
-          <NavItem icon={require('../assets/test-account.png')} label="ฉัน" />
-        </View>
+        <BottomNav /> {/* เรียกใช้ BottomNav Component */}
       </View>
     </ImageBackground>
   );
