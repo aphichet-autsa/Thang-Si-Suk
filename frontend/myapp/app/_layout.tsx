@@ -1,4 +1,3 @@
-// app/_layout.tsx
 import { Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { auth } from '../config/firebase-config'; // ✅ Firebase Auth
@@ -28,7 +27,7 @@ export default function RootLayout() {
       <Stack.Screen name="detail" options={{ headerShown: false }} />
       <Stack.Screen name="registershop" options={{ headerShown: false }} />
       <Stack.Screen name="home" options={{ headerShown: false }} />
-      <Stack.Screen name="lookpost" options={{ headerShown: false }} />
+      
     </Stack>
   );
 }
