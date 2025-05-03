@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Image, FlatList, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { HeaderOnly, BottomNavOnly } from '../components/header';
+import { HeaderOnly, BottomNav } from '../components/header';
 
 export default function PostScreen() {
   const router = useRouter();
