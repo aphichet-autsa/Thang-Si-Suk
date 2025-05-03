@@ -1,13 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  Image,
-  StyleSheet,
-  ScrollView,
-  ImageBackground,
-  TouchableOpacity,
-} from "react-native";
+import {View,Text,Image,StyleSheet,ScrollView,ImageBackground,TouchableOpacity,} from "react-native";
 import { useRouter } from "expo-router";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../config/firebase-config"; // Firebase Config
@@ -39,7 +31,11 @@ export default function HomeScreen() {
             {images.filter((image) => image.position === "top").map((image, index) => (
               <View key={index} style={styles.imageCardTop}>
                 <View style={styles.cardShadow} />
-                <Image source={{ uri: image.imageUrl }} style={styles.imagePreviewTop} resizeMode="cover" />
+                {image.imageUrl ? (
+                  <Image source={{ uri: image.imageUrl }} style={styles.imagePreviewTop} resizeMode="cover" />
+                ) : (
+                  <Text style={styles.noImageText}>Image not available</Text> // เมื่อไม่มี imageUrl จะแสดงข้อความแทน
+                )}
               </View>
             ))}
           </ScrollView>
@@ -55,7 +51,11 @@ export default function HomeScreen() {
           <ScrollView contentContainerStyle={styles.verticalScroll}>
             {images.filter((image) => image.position === "bottom").map((image, index) => (
               <View key={index} style={styles.imageCardBottom}>
-                <Image source={{ uri: image.imageUrl }} style={styles.imagePreviewBottom} resizeMode="cover" />
+                {image.imageUrl ? (
+                  <Image source={{ uri: image.imageUrl }} style={styles.imagePreviewBottom} resizeMode="cover" />
+                ) : (
+                  <Text style={styles.noImageText}>Image not available</Text> // เมื่อไม่มี imageUrl จะแสดงข้อความแทน
+                )}
               </View>
             ))}
           </ScrollView>
@@ -82,6 +82,7 @@ const NavItem = ({ icon, label, active, onPress }) => (
     </View>
   </TouchableOpacity>
 );
+
 const styles = StyleSheet.create({
   background: {
     flex: 1,
@@ -94,45 +95,18 @@ const styles = StyleSheet.create({
   container: {
     paddingBottom: 100,
   },
-  header: {
-    backgroundColor: '#B7E305',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingTop: 40,
-    paddingBottom: 15,
-    justifyContent: 'space-between',
-  },
-  logo: {
-    width: 60,
-    height: 60,
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#000',
-  },
-  headerIcons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  iconSmall: {
-    width: 28,
-    height: 28,
-    marginHorizontal: 5,
-  },
   scrollSection: {
     paddingHorizontal: 15,
     marginTop: 20,
   },
   verticalScroll: {
     marginBottom: 20,
-    alignItems: 'center', // This will center images in vertical ScrollView
+    alignItems: 'center',
   },
   imageCardTop: {
     marginRight: 15,
     width: 230,
-    height: 150, // Increased height for top images
+    height: 150,
     borderRadius: 12,
     overflow: 'hidden',
     position: 'relative',
@@ -141,7 +115,7 @@ const styles = StyleSheet.create({
   imageCardBottom: {
     marginRight: 15,
     width: 350,
-    height: 200, // Height for bottom images
+    height: 200,
     borderRadius: 12,
     overflow: 'hidden',
     position: 'relative',
@@ -190,95 +164,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
-  posterGroup: {
-    position: 'relative',
-    marginTop: 15,
-  },
-  posterBackground: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    height: 180,
-    width: '90%',
-    alignSelf: 'center',
-    position: 'absolute',
-    top: 0,
-    zIndex: -1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  posterRow: {
-    flexDirection: 'row',
-    marginHorizontal: 20,
-    gap: 10,
-  },
-  posterLeft: {
-    width: '47%',
-    height: 160,
-    borderRadius: 10,
-  },
-  posterRight: {
-    width: '47%',
-    height: 160,
-    borderRadius: 10,
-  },
-  fullPoster: {
-    width: '90%',
-    height: 200,
-    borderRadius: 10,
-    alignSelf: 'center',
-    marginTop: 25,
-  },
-  navBar: {
-    backgroundColor: '#fff',
-    flexDirection: 'row',
-    justifyContent: 'space-around', // จัดให้ปุ่มกระจายออกจากกัน
-    alignItems: 'center', // จัดปุ่มในแนวตั้งให้ตรงกลาง
-    paddingVertical: 12,
-    width: '100%',
-    borderTopWidth: 1,
-    borderColor: '#ddd',
-    elevation: 8,
-  },
-  navItem: {
-    alignItems: 'center',
-    flex: 1, // ให้แต่ละปุ่มใช้พื้นที่เท่ากัน
-    justifyContent: 'center', // จัดตำแหน่งปุ่มในแนวตั้ง
-  },
-  navIcon: {
-    width: 30,
-    height: 30,
-    tintColor: '#000',
-  },
-  navItemCenter: {
-    justifyContent: 'center', // Center the middle button vertically and horizontally
-    alignItems: 'center',
-    marginTop: -16,
-    backgroundColor: '#fff',
-    borderRadius: 30,
-    width: 60,
-    height: 60,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  navLabel: {
-    fontSize: 11,
-    marginTop: 3,
-  },
-
-  addButton: {
-    backgroundColor: '#fff',
-    borderRadius: 30,
-    width: 55,
-    height: 55,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: -25,
-    elevation: 5,
+  noImageText: {
+    textAlign: 'center',
+    fontSize: 14,
+    color: '#777',
   },
 });
