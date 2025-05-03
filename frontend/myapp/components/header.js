@@ -17,7 +17,7 @@ const BottomNav = () => {
         <Text style={styles.navLabel}>ร้านรับซื้อ</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.navItemCenter} onPress={() => router.push('/Post')}>
+      <TouchableOpacity style={styles.navItemCenter} onPress={() => router.push('/post')}>
         <Image source={require('../assets/plus.png')} style={styles.bottomIconCenter} />
       </TouchableOpacity>
 

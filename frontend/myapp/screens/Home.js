@@ -37,8 +37,8 @@ export default function HomeScreen() {
             <View style={styles.headerIcons}>
               <Image source={require('../assets/location.png')} style={styles.iconSmall} />
               <TouchableOpacity onPress={() => router.push('/')} >
-                  <Image source={require('../assets/logout.png')} style={{ width: 24, height: 24 }} />
-            </TouchableOpacity>
+                <Image source={require('../assets/logout.png')} style={{ width: 24, height: 24 }} />
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -73,8 +73,8 @@ export default function HomeScreen() {
         <View style={styles.navBar}>
           <NavItem icon={require('../assets/home-2.png')} label="หน้าแรก" active />
           <NavItem icon={require('../assets/shop.png')} label="ร้านรับซื้อ" onPress={() => router.push('/shop')} />
-         <TouchableOpacity style={styles.navItemCenter} onPress={() => router.push('/post')}>
-                   <Image source={require('../assets/plus.png')} style={styles.bottomIconCenter} />
+          <TouchableOpacity style={styles.navItemCenter} onPress={() => router.push('/post')}>
+            <Image source={require('../assets/plus.png')} style={styles.bottomIconCenter} />
           </TouchableOpacity>
           <NavItem icon={require('../assets/location.png')} label="ร้านใกล้ฉัน" active />
           <NavItem icon={require('../assets/test-account.png')} label="ฉัน" />
@@ -99,6 +99,8 @@ const NavItem = ({ icon, label, active, onPress }) => (
     </View>
   </TouchableOpacity>
 );
+
+
 const styles = StyleSheet.create({
   background: {
     flex: 1,
