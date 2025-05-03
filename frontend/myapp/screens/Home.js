@@ -1,24 +1,35 @@
 import React, { useEffect, useState } from "react";
-import {View,Text,Image,StyleSheet,ScrollView,ImageBackground,TouchableOpacity,} from "react-native";
-import { useRouter } from "expo-router";
+import { View, Text, Image, StyleSheet, ScrollView, ImageBackground, TouchableOpacity } from "react-native";
+import { useNavigation } from "@react-navigation/native"; // ใช้ useNavigation จาก react-navigation
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../config/firebase-config"; // Firebase Config
 import Header from '../components/header';  // นำเข้า Header Component
 import BottomNav from '../components/BottomNav';  // นำเข้า BottomNav Component
 
 export default function HomeScreen() {
-  const router = useRouter(); // สร้างตัวแปรเพื่อใช้ใน router
-  const [images, setImages] = useState([]);
+  const navigation = useNavigation(); // ใช้ useNavigation hook
+  const [images, setImages] = useState([]);  // เก็บภาพที่ได้จาก Firestore
+  const [loading, setLoading] = useState(true);  // เพิ่ม state สำหรับการโหลดข้อมูล
 
   useEffect(() => {
     fetchImages();
   }, []);
 
   const fetchImages = async () => {
-    const querySnapshot = await getDocs(collection(db, "knowledges"));
-    const imageData = querySnapshot.docs.map((doc) => doc.data());
-    setImages(imageData);
+    try {
+      const querySnapshot = await getDocs(collection(db, "knowledges"));
+      const imageData = querySnapshot.docs.map((doc) => doc.data());
+      setImages(imageData);  // เซตข้อมูลภาพลงใน state
+      setLoading(false);  // อัปเดต state ให้หยุดการโหลด
+    } catch (error) {
+      console.error("Error fetching images: ", error);
+      setLoading(false);  // กรณีเกิดข้อผิดพลาดก็หยุดการโหลด
+    }
   };
+
+  if (loading) {
+    return <Text>กำลังโหลด...</Text>;  // แสดงข้อความกำลังโหลดหากข้อมูลยังไม่ได้รับ
+  }
 
   return (
     <ImageBackground style={styles.background} resizeMode="cover">
@@ -34,7 +45,7 @@ export default function HomeScreen() {
                 {image.imageUrl ? (
                   <Image source={{ uri: image.imageUrl }} style={styles.imagePreviewTop} resizeMode="cover" />
                 ) : (
-                  <Text style={styles.noImageText}>Image not available</Text> // เมื่อไม่มี imageUrl จะแสดงข้อความแทน
+                  <Text style={styles.noImageText}>Image not available</Text>  {/* แสดงข้อความเมื่อไม่มี imageUrl */}
                 )}
               </View>
             ))}
@@ -42,9 +53,9 @@ export default function HomeScreen() {
 
           {/* Feature Buttons */}
           <View style={styles.featureRow}>
-            <FeatureButton title="ร้านรับซื้อ" icon={require('../assets/bg-home.png')} onPress={() => router.push('/shop')} />
-            <FeatureButton title="โพสต์ซื้อขาย" icon={require('../assets/excellent.png')} onPress={() => router.push('/look')} />
-            <FeatureButton title="บริจาค" icon={require('../assets/fundraising.png')} onPress={() => router.push('/look')} />
+            <FeatureButton title="ร้านรับซื้อ" icon={require('../assets/bg-home.png')} onPress={() => navigation.navigate('Shop')} />
+            <FeatureButton title="โพสต์ซื้อขาย" icon={require('../assets/excellent.png')} onPress={() => navigation.navigate('LookPost')} />
+            <FeatureButton title="บริจาค" icon={require('../assets/fundraising.png')} onPress={() => navigation.navigate('LookPost')} />
           </View>
 
           {/* Scrollable Cards for Infographic Images (Vertical) */}
@@ -54,7 +65,7 @@ export default function HomeScreen() {
                 {image.imageUrl ? (
                   <Image source={{ uri: image.imageUrl }} style={styles.imagePreviewBottom} resizeMode="cover" />
                 ) : (
-                  <Text style={styles.noImageText}>Image not available</Text> // เมื่อไม่มี imageUrl จะแสดงข้อความแทน
+                  <Text style={styles.noImageText}>Image not available</Text>  {/* แสดงข้อความเมื่อไม่มี imageUrl */}
                 )}
               </View>
             ))}
@@ -64,22 +75,13 @@ export default function HomeScreen() {
         <BottomNav /> {/* เรียกใช้ BottomNav Component */}
       </View>
     </ImageBackground>
-  );
+);
 }
 
 const FeatureButton = ({ title, icon, onPress }) => (
   <TouchableOpacity style={styles.featureBtn} onPress={onPress}>
     <Image source={icon} style={styles.featureIcon} />
     <Text style={styles.featureText}>{title}</Text>
-  </TouchableOpacity>
-);
-
-const NavItem = ({ icon, label, active, onPress }) => (
-  <TouchableOpacity onPress={onPress}>
-    <View style={styles.navItem}>
-      <Image source={icon} style={[styles.navIcon, active && styles.navIconActive]} />
-      <Text style={styles.navLabel}>{label}</Text>
-    </View>
   </TouchableOpacity>
 );
 

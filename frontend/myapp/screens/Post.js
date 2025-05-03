@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Image, FlatList, Modal } from 'react-native';
-import { useRouter } from 'expo-router';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Image, FlatList } from 'react-native';
+import { useNavigation } from '@react-navigation/native'; // ใช้ useNavigation hook จาก react-navigation
 import * as ImagePicker from 'expo-image-picker';
-import { HeaderOnly, BottomNav } from '../components/header';
+import Header from '../components/header';  // นำเข้า Header Component
+import BottomNav from '../components/BottomNav';  // นำเข้า BottomNav Component
 
 export default function PostScreen() {
-  const router = useRouter();
-  const [images, setImages] = useState([]);
+  const navigation = useNavigation(); // ใช้ useNavigation hook
+  const [images, setImages] = useState([]); // เก็บภาพที่เลือก
   const [caption, setCaption] = useState('');
-  const [hasPermission, setHasPermission] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(null);
+  const [hasPermission, setHasPermission] = useState(null);
 
   useEffect(() => {
     const checkPermissions = async () => {
+      // ตรวจสอบสิทธิ์การเข้าถึงกล้อง
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
         alert('กรุณาอนุญาตให้ใช้กล้อง');
@@ -21,6 +21,7 @@ export default function PostScreen() {
         setHasPermission(true);
       }
 
+      // ตรวจสอบสิทธิ์การเข้าถึงแกลเลอรี
       const { status: mediaStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (mediaStatus !== 'granted') {
         alert('กรุณาอนุญาตให้เข้าถึงแกลเลอรี');
@@ -30,61 +31,49 @@ export default function PostScreen() {
   }, []);
 
   const openCamera = async () => {
-    if (hasPermission && images.length < 8) {
+    if (hasPermission) {
       const result = await ImagePicker.launchCameraAsync({
         allowsEditing: false,
         quality: 1,
         mediaTypes: ImagePicker.MediaTypeImages,
       });
 
+      console.log("Camera result:", result); // ตรวจสอบผลลัพธ์จากการถ่ายภาพ
       if (!result.cancelled && result.assets && result.assets[0].uri) {
-        setImages((prev) => [...prev, result.assets[0].uri]);
+        setImages((prev) => [...prev, result.assets[0].uri]);  // ดึง URI จาก assets[0].uri
+      } else {
+        console.log("ไม่สามารถรับ URI ได้จากกล้อง");
       }
     } else {
-      alert('กรุณาอนุญาตให้ใช้กล้อง หรือภาพเกินจำนวนที่กำหนด');
+      alert('กรุณาอนุญาตให้ใช้กล้อง');
     }
   };
 
   const openGallery = async () => {
-    if (hasPermission && images.length < 8) {
+    if (hasPermission) {
       const result = await ImagePicker.launchImageLibraryAsync({
         allowsEditing: false,
         quality: 1,
         mediaTypes: ImagePicker.MediaTypeImages,
       });
 
+      console.log("Gallery result:", result); // ตรวจสอบผลลัพธ์จากการเลือกภาพ
       if (!result.cancelled && result.assets && result.assets[0].uri) {
-        setImages((prev) => [...prev, result.assets[0].uri]);
+        setImages((prev) => [...prev, result.assets[0].uri]);  // ดึง URI จาก assets[0].uri
+      } else {
+        console.log("ไม่สามารถรับ URI ได้จากแกลเลอรี");
       }
     } else {
-      alert('กรุณาอนุญาตให้เข้าถึงแกลเลอรี หรือภาพเกินจำนวนที่กำหนด');
+      alert('กรุณาอนุญาตให้เข้าถึงแกลเลอรี');
     }
   };
 
-  const renderImageItem = ({ item, index }) => (
-    <TouchableOpacity onPress={() => handleImagePress(index)}>
+  const renderImageItem = ({ item }) => {
+    return (
       <View style={styles.imageContainer}>
         <Image source={{ uri: item }} style={styles.image} resizeMode="cover" />
       </View>
-    </TouchableOpacity>
-  );
-
-  const handleImagePress = (index) => {
-    setSelectedImageIndex(index);
-    setModalVisible(true);
-  };
-
-  const handleDeleteImage = () => {
-    setImages((prevImages) => prevImages.filter((_, index) => index !== selectedImageIndex));
-    setModalVisible(false);
-  };
-
-  const handleCancel = () => {
-    setModalVisible(false);
-  };
-
-  const handleSave = () => {
-    setModalVisible(false);
+    );
   };
 
   if (hasPermission === null) {
@@ -97,13 +86,14 @@ export default function PostScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
-      <HeaderOnly />
-
+      {/* 🔥 SubHeader */}
+      <Header /> {/* เรียกใช้ Header Component */}
       <View style={styles.subHeader}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>{/* ใช้ goBack ของ useNavigation */}
           <Image source={require('../assets/back.png')} style={styles.smallIcon} />
         </TouchableOpacity>
-        <Text style={styles.subHeaderTitle}>โพสต์ </Text>
+        <Text style={styles.subHeaderTitle}>โพสต์</Text>
+        {/* ไอคอนกล้องและรูปภาพ */}
         <View style={styles.iconContainer}>
           <TouchableOpacity onPress={openCamera}>
             <Image source={require('../assets/camera.png')} style={styles.smallIcon} />
@@ -114,6 +104,7 @@ export default function PostScreen() {
         </View>
       </View>
 
+      {/* 🔥 ScrollView ส่วนกลาง */}
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <TextInput
           style={styles.captionInput}
@@ -123,6 +114,7 @@ export default function PostScreen() {
           multiline
         />
 
+        {/* แสดงภาพที่เลือก */}
         <FlatList
           data={images}
           renderItem={renderImageItem}
@@ -130,6 +122,12 @@ export default function PostScreen() {
           horizontal
           style={styles.imageList}
         />
+
+        {/* เพิ่มตำแหน่ง */}
+        <View style={styles.locationRow}>
+          <Image source={require('../assets/location.png')} style={styles.locationIcon} />
+          <Text style={styles.addLocation}>เพิ่มตำแหน่งของคุณ</Text>
+        </View>
 
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.cancelButton}>
@@ -141,25 +139,7 @@ export default function PostScreen() {
         </View>
       </ScrollView>
 
-      <Modal
-        visible={modalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setModalVisible(false)} >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text>คุณต้องการทำอะไรกับภาพนี้?</Text>
-            <TouchableOpacity onPress={handleDeleteImage}>
-              <Text style={styles.modalButton}>ลบภาพ</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleCancel}>
-              <Text style={styles.modalButton}>ยกเลิก</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      <BottomNavOnly />
+      <BottomNav /> {/* เรียกใช้ BottomNav Component */}
     </View>
   );
 }
@@ -178,17 +158,16 @@ const styles = StyleSheet.create({
   subHeaderTitle: {
     fontSize: 25,
     fontWeight: 'bold',
-    color: '#000000',
+    color: '#fff',
   },
   smallIcon: {
-    width: 30,
-    height: 30,
+    width: 40,
+    height: 40,
   },
   iconContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: 120,
-    paddingHorizontal: 10,
+    justifyContent: 'space-between',
+    width: 90,
   },
   scrollContent: {
     padding: 20,
@@ -217,6 +196,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ddd',
   },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  locationIcon: {
+    width: 24,
+    height: 24,
+    marginRight: 10,
+  },
+  addLocation: {
+    fontSize: 16,
+    color: '#333',
+  },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -240,24 +233,6 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontSize: 16,
-    color: '#fff',
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalContent: {
-    width: 300,
-    padding: 20,
-    backgroundColor: 'white',
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  modalButton: {
-    fontSize: 18,
-    color: '#007BFF',
-    marginVertical: 10,
+    fontWeight: 'bold',
   },
 });
