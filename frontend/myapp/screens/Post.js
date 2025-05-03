@@ -1,26 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Image, FlatList, Modal, Linking } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Image, FlatList, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import * as Location from 'expo-location'; // import expo-location
-import MapView, { Marker } from 'react-native-maps'; // For displaying the map
-import { HeaderOnly, BottomNavOnly } from '../components/header'; // Import Header and Bottom Navigation
-import ImagePickerComponent from '../components/ImagePickerComponent';
+import { HeaderOnly, BottomNavOnly } from '../components/header';
 
 export default function PostScreen() {
   const router = useRouter();
-  const [images, setImages] = useState([]); // เก็บภาพที่เลือก
+  const [images, setImages] = useState([]);
   const [caption, setCaption] = useState('');
-  const [hasPermission, setHasPermission] = useState(false); // เปลี่ยนเป็น boolean
+  const [hasPermission, setHasPermission] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(null); // เลือกภาพที่จะลบหรือแก้ไข
-  const [location, setLocation] = useState(null); // เก็บตำแหน่ง
-  const [locationName, setLocationName] = useState(''); // เก็บชื่อสถานที่จาก Reverse Geocoding
-  const [region, setRegion] = useState(null); // สำหรับการตั้งแผนที่
+  const [selectedImageIndex, setSelectedImageIndex] = useState(null);
 
   useEffect(() => {
     const checkPermissions = async () => {
-      // ตรวจสอบสิทธิ์การเข้าถึงกล้อง
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
         alert('กรุณาอนุญาตให้ใช้กล้อง');
@@ -28,23 +21,16 @@ export default function PostScreen() {
         setHasPermission(true);
       }
 
-      // ตรวจสอบสิทธิ์การเข้าถึงแกลเลอรี
       const { status: mediaStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (mediaStatus !== 'granted') {
         alert('กรุณาอนุญาตให้เข้าถึงแกลเลอรี');
-      }
-
-      // ตรวจสอบสิทธิ์การเข้าถึงตำแหน่ง
-      const { status: locationStatus } = await Location.requestForegroundPermissionsAsync();
-      if (locationStatus !== 'granted') {
-        alert('ไม่สามารถเข้าถึงตำแหน่ง');
       }
     };
     checkPermissions();
   }, []);
 
   const openCamera = async () => {
-    if (hasPermission && images.length < 8) { // จำกัดจำนวนภาพไม่เกิน 8
+    if (hasPermission && images.length < 8) {
       const result = await ImagePicker.launchCameraAsync({
         allowsEditing: false,
         quality: 1,
@@ -52,7 +38,7 @@ export default function PostScreen() {
       });
 
       if (!result.cancelled && result.assets && result.assets[0].uri) {
-        setImages((prev) => [...prev, result.assets[0].uri]);  // ดึง URI จาก assets[0].uri
+        setImages((prev) => [...prev, result.assets[0].uri]);
       }
     } else {
       alert('กรุณาอนุญาตให้ใช้กล้อง หรือภาพเกินจำนวนที่กำหนด');
@@ -60,7 +46,7 @@ export default function PostScreen() {
   };
 
   const openGallery = async () => {
-    if (hasPermission && images.length < 8) { // จำกัดจำนวนภาพไม่เกิน 8
+    if (hasPermission && images.length < 8) {
       const result = await ImagePicker.launchImageLibraryAsync({
         allowsEditing: false,
         quality: 1,
@@ -68,39 +54,10 @@ export default function PostScreen() {
       });
 
       if (!result.cancelled && result.assets && result.assets[0].uri) {
-        setImages((prev) => [...prev, result.assets[0].uri]);  // ดึง URI จาก assets[0].uri
+        setImages((prev) => [...prev, result.assets[0].uri]);
       }
     } else {
       alert('กรุณาอนุญาตให้เข้าถึงแกลเลอรี หรือภาพเกินจำนวนที่กำหนด');
-    }
-  };
-
-  const getLocation = async () => {
-    let { coords } = await Location.getCurrentPositionAsync({}); 
-    setLocation(coords);
-    setRegion({
-      latitude: coords.latitude,
-      longitude: coords.longitude,
-      latitudeDelta: 0.0922,
-      longitudeDelta: 0.0421,
-    });
-
-    const geocode = await Location.reverseGeocodeAsync({
-      latitude: coords.latitude,
-      longitude: coords.longitude,
-    });
-
-    if (geocode.length > 0) {
-      const locationData = geocode[0];
-      const locationString = `${locationData.city || ''} ${locationData.region || ''} ${locationData.country || ''}`;
-      setLocationName(locationString); // เก็บชื่อสถานที่ที่ได้
-    }
-  };
-
-  const openMap = () => {
-    if (location) {
-      const url = `https://www.google.com/maps?q=${location.latitude},${location.longitude}`;
-      Linking.openURL(url); // เปิด Google Maps เพื่อดูเส้นทาง
     }
   };
 
@@ -114,16 +71,16 @@ export default function PostScreen() {
 
   const handleImagePress = (index) => {
     setSelectedImageIndex(index);
-    setModalVisible(true); // เปิด modal เมื่อกดที่ภาพ
+    setModalVisible(true);
   };
 
   const handleDeleteImage = () => {
-    setImages((prevImages) => prevImages.filter((_, index) => index !== selectedImageIndex)); // ลบภาพที่เลือก
+    setImages((prevImages) => prevImages.filter((_, index) => index !== selectedImageIndex));
     setModalVisible(false);
   };
 
   const handleCancel = () => {
-    setModalVisible(false); // ปิด modal เมื่อกด Cancel
+    setModalVisible(false);
   };
 
   const handleSave = () => {
@@ -142,7 +99,6 @@ export default function PostScreen() {
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
       <HeaderOnly />
 
-      {/* SubHeader */}
       <View style={styles.subHeader}>
         <TouchableOpacity onPress={() => router.back()}>
           <Image source={require('../assets/back.png')} style={styles.smallIcon} />
@@ -158,7 +114,6 @@ export default function PostScreen() {
         </View>
       </View>
 
-      {/* ScrollView ส่วนกลาง */}
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <TextInput
           style={styles.captionInput}
@@ -167,7 +122,7 @@ export default function PostScreen() {
           onChangeText={setCaption}
           multiline
         />
-        
+
         <FlatList
           data={images}
           renderItem={renderImageItem}
@@ -175,27 +130,6 @@ export default function PostScreen() {
           horizontal
           style={styles.imageList}
         />
-
-        <View style={styles.locationRow}>
-          <TouchableOpacity onPress={getLocation}>
-            <Image source={require('../assets/location.png')} style={styles.locationIcon} />
-          </TouchableOpacity>
-          {location ? (
-            <Text style={styles.addLocation}>
-              {locationName ? locationName : `ตำแหน่งของคุณ: ${location.latitude}, ${location.longitude}`}
-            </Text>
-          ) : (
-            <Text style={styles.addLocation}>เพิ่มตำแหน่งของคุณ</Text>
-          )}
-        </View>
-
-        <View style={styles.locationRow}>
-          {location && (
-            <TouchableOpacity style={styles.openMapButton} onPress={openMap}>
-              <Text style={styles.buttonText}>ดูเส้นทาง</Text>
-            </TouchableOpacity>
-          )}
-        </View>
 
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.cancelButton}>
@@ -207,7 +141,6 @@ export default function PostScreen() {
         </View>
       </ScrollView>
 
-      {/* Modal สำหรับลบหรือแก้ไขภาพ */}
       <Modal
         visible={modalVisible}
         animationType="slide"
@@ -248,14 +181,14 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
   smallIcon: {
-    width: 30,  // ขนาดที่เล็กลงสำหรับไอคอน
+    width: 30,
     height: 30,
   },
   iconContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around', // เปลี่ยนจาก 'space-between' เป็น 'space-around' เพื่อให้ไอคอนมีระยะห่างที่เหมาะสม
-    width: 120,  // กำหนดความกว้างให้เหมาะสม
-    paddingHorizontal: 10,  // เพิ่ม padding ระหว่างไอคอน
+    justifyContent: 'space-around',
+    width: 120,
+    paddingHorizontal: 10,
   },
   scrollContent: {
     padding: 20,
@@ -284,31 +217,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ddd',
   },
-  locationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  locationIcon: {
-    width: 24,
-    height: 24,
-    marginRight: 10,
-  },
-  addLocation: {
-    fontSize: 16,
-    color: '#333',
-  },
-  openMapButton: {
-    backgroundColor: '#007BFF',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-    marginTop: 10,
-  },
-  buttonText: {
-    fontSize: 16,
-    color: '#fff',
-  },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -329,6 +237,10 @@ const styles = StyleSheet.create({
     padding: 15,
     alignItems: 'center',
     borderRadius: 10,
+  },
+  buttonText: {
+    fontSize: 16,
+    color: '#fff',
   },
   modalContainer: {
     flex: 1,

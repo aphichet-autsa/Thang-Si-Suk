@@ -100,10 +100,10 @@ export default function UserListPage() {
 
           {/* Menu */}
           <button style={buttonStyle} onClick={() => router.push('/home')}>จัดการความรู้ในระบบ</button>
-          <button style={buttonStyle}>ร้านค้าในระบบ</button>
+          <button style={buttonStyle} onClick={() => router.push('/shop')} >ร้านค้าในระบบ</button>
           <button style={buttonStyle}>จัดการโพส</button>
           <button style={{ ...buttonStyle, backgroundColor: '#91E2FF' }}>ผู้ใช้ในระบบ</button>
-          <button style={buttonStyle}>แอดมิน</button>
+          <button style={buttonStyle} onClick={() => router.push('/dashboard')}>แดชบอร์ด</button>
 
           {/* Logout Button */}
           <div style={{ display: 'flex', gap: '10px' }}>

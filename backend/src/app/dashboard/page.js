@@ -33,7 +33,7 @@ const Dashboard = () => {
         const userCount = usersSnapshot.size;
         
         // ดึงข้อมูลอื่นๆ (ตัวอย่าง)
-        // const shopsSnapshot = await getDocs(collection(db, "shops"));
+        const shopsSnapshot = await getDocs(collection(db, "shops"));
         // const postsSnapshot = await getDocs(collection(db, "posts"));
         
         setStats({
@@ -91,8 +91,8 @@ const Dashboard = () => {
           textAlign: 'center'
         }}>THANGSISUK</h2>
         
-        <button style={buttonStyle}>จัดการความรู้ในระบบ</button>
-        <button style={buttonStyle}>ร้านค้าในระบบ</button>
+        <button style={buttonStyle} onClick={() => router.push("/home")}>จัดการความรู้ในระบบ</button>
+        <button style={buttonStyle} onClick={() => router.push("/shop")} >ร้านค้าในระบบ </button>
         <button style={buttonStyle}>จัดการโพส</button>
         <button style={buttonStyle} onClick={() => router.push('/userlist')}>
           ผู้ใช้ในระบบ
