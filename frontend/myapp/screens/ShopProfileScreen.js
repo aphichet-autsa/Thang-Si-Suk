@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';  // ใช้ useNavigation hook
 import { HeaderOnly, BottomNavOnly } from '../components/header'; // นำเข้าคอมโพเนนต์ HeaderOnly และ BottomNavOnly
 
 // Social Link Component
@@ -29,6 +30,12 @@ const Post = () => (
 );
 
 const ShopProfileScreen = () => {
+  const navigation = useNavigation();
+
+  const goToProfilePage = () => {
+    navigation.navigate('ProfilePage');  // นำทางไปยังหน้า ProfilePage
+  };
+
   return (
     <View style={styles.container}>
       {/* ใช้ HeaderOnly จาก components */}
@@ -52,8 +59,8 @@ const ShopProfileScreen = () => {
         <Post />
       </ScrollView>
 
-      {/* ใช้ BottomNavOnly จาก components */}
-      <BottomNavOnly />
+      {/* ปุ่มฉัน */}
+      <BottomNavOnly onPressProfile={goToProfilePage} />
     </View>
   );
 };
@@ -62,19 +69,6 @@ export default ShopProfileScreen;
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  header: {
-    backgroundColor: '#B7E305',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 15,
-    paddingTop: 40,
-    paddingBottom: 10,
-  },
-  logo: { width: 50, height: 50 },
-  headerTitle: { fontSize: 22, fontWeight: 'bold', color: '#000' },
-  icon: { width: 28, height: 28 },
-  content: { padding: 20, alignItems: 'center' },
   profile: { width: 80, height: 80, borderRadius: 40, marginBottom: 10 },
   name: { fontWeight: 'bold', fontSize: 16, marginBottom: 10 },
   socialRow: {
@@ -125,32 +119,5 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     fontWeight: 'bold',
   },
-  bottomNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    borderColor: '#ddd',
-  },
-  navItem: {
-    alignItems: 'center',
-  },
-  navIcon: {
-    width: 30,
-    height: 30,
-  },
-  navLabel: {
-    fontSize: 11,
-    marginTop: 2,
-  },
-  addButton: {
-    backgroundColor: '#B7E305',
-    width: 55,
-    height: 55,
-    borderRadius: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: -20,
-    elevation: 5,
-  },
 });
+
