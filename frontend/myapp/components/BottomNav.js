@@ -24,7 +24,7 @@ export default function BottomNav() {
     <View style={styles.navBar}>
       <NavItem icon={require('../assets/home-2.png')} label="หน้าแรก" active={activeIndex === 0} onPress={() => handleNavItemPress(0, '/home')} />
       <NavItem icon={require('../assets/shop.png')} label="ร้านรับซื้อ" active={activeIndex === 1} onPress={() => handleNavItemPress(1, '/shop')} />
-      <TouchableOpacity style={styles.navItemCenter} onPress={() => handleNavItemPress(2, '/post')}>
+      <TouchableOpacity style={styles.navItemCenter} onPress={() => handleNavItemPress(2, '/Post')}>
         <Image source={require('../assets/plus.png')} style={styles.bottomIconCenter} />
       </TouchableOpacity>
       <NavItem icon={require('../assets/location.png')} label="ร้านใกล้ฉัน" active={activeIndex === 3} onPress={() => handleNavItemPress(3, '/location')} />

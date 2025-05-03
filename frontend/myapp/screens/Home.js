@@ -45,7 +45,7 @@ export default function HomeScreen() {
                 {image.imageUrl ? (
                   <Image source={{ uri: image.imageUrl }} style={styles.imagePreviewTop} resizeMode="cover" />
                 ) : (
-                  <Text style={styles.noImageText}>Image not available</Text>  {/* แสดงข้อความเมื่อไม่มี imageUrl */}
+                  <Text style={styles.noImageText}>Image not available</Text>  // แสดงข้อความเมื่อไม่มี imageUrl */}
                 )}
               </View>
             ))}
@@ -54,8 +54,8 @@ export default function HomeScreen() {
           {/* Feature Buttons */}
           <View style={styles.featureRow}>
             <FeatureButton title="ร้านรับซื้อ" icon={require('../assets/bg-home.png')} onPress={() => navigation.navigate('Shop')} />
-            <FeatureButton title="โพสต์ซื้อขาย" icon={require('../assets/excellent.png')} onPress={() => navigation.navigate('LookPost')} />
-            <FeatureButton title="บริจาค" icon={require('../assets/fundraising.png')} onPress={() => navigation.navigate('LookPost')} />
+            <FeatureButton title="โพสต์ซื้อขาย" icon={require('../assets/excellent.png')} onPress={() => navigation.navigate('lookpost')} />
+            <FeatureButton title="บริจาค" icon={require('../assets/fundraising.png')} onPress={() => navigation.navigate('lookpost')} />
           </View>
 
           {/* Scrollable Cards for Infographic Images (Vertical) */}
@@ -65,7 +65,7 @@ export default function HomeScreen() {
                 {image.imageUrl ? (
                   <Image source={{ uri: image.imageUrl }} style={styles.imagePreviewBottom} resizeMode="cover" />
                 ) : (
-                  <Text style={styles.noImageText}>Image not available</Text>  {/* แสดงข้อความเมื่อไม่มี imageUrl */}
+                  <Text style={styles.noImageText}>Image not available</Text>  // แสดงข้อความเมื่อไม่มี imageUrl //
                 )}
               </View>
             ))}
@@ -75,7 +75,7 @@ export default function HomeScreen() {
         <BottomNav /> {/* เรียกใช้ BottomNav Component */}
       </View>
     </ImageBackground>
-);
+  );
 }
 
 const FeatureButton = ({ title, icon, onPress }) => (
