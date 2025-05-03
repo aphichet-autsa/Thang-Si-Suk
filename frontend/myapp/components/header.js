@@ -15,10 +15,10 @@ export default function Header() {
 
       {/* Location + Logout Icons */}
       <View style={styles.rightGroup}>
-        <TouchableOpacity onPress={() => router.push('/')}>
+        <TouchableOpacity onPress={() => router.push('/')} style={styles.iconContainer}>
           <Image source={require('../assets/location.png')} style={styles.icon} />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push('/')}>
+        <TouchableOpacity onPress={() => router.push('/')} style={styles.iconContainer}>
           <Image source={require('../assets/logout.png')} style={styles.icon} />
         </TouchableOpacity>
       </View>
@@ -27,11 +27,36 @@ export default function Header() {
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', padding: 10, backgroundColor: '#B7E305' },
-  logo: { width: 40, height: 40 },
-  headerText: { flex: 1, fontSize: 18, fontWeight: 'bold', marginLeft: 10 },
-  headerIcons: { flexDirection: 'row' },
-  icon: { width: 24, height: 24, marginLeft: 10 },
-  leftGroup: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  rightGroup: { flexDirection: 'row', gap: 10 },
+  header: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'space-between',  // ทำให้กลุ่มซ้ายและขวาแยกออกจากกัน
+    padding: 10, 
+    backgroundColor: '#B7E305' 
+  },
+  logo: { 
+    width: 40, 
+    height: 40 
+  },
+  headerText: { 
+    fontSize: 18, 
+    fontWeight: 'bold', 
+    marginLeft: 10 
+  },
+  leftGroup: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 10 
+  },
+  rightGroup: { 
+    flexDirection: 'row', 
+    gap: 10 
+  },
+  icon: { 
+    width: 24, 
+    height: 24 
+  },
+  iconContainer: { 
+    padding: 5 // เพิ่มการเว้นระยะระหว่างไอคอน
+  }
 });
