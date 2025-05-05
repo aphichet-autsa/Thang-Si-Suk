@@ -73,7 +73,10 @@ export default function PostScreen() {
       const place = geocode?.[0] || {};
       const fullAddress = `${place.name || ''} ${place.street || ''} ${place.district || ''} ${place.city || ''} ${place.region || ''}`.trim();
 
-      setCoords(loc.coords);
+      setCoords({
+        latitude: loc.coords.latitude,
+        longitude: loc.coords.longitude
+      });
       setAddress(fullAddress);
     } catch (err) {
       console.error('Location error:', err);
@@ -111,7 +114,7 @@ export default function PostScreen() {
         caption,
         imageUrls: uploadedUrls,
         address,
-        coords,
+        coords: coords || null,
         createdAt: serverTimestamp(),
       });
 
