@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image, ScrollView, StyleSheet, Alert } from 'react-native';
 import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
-import { addDoc, collection } from 'firebase/firestore'; 
-import { db } from '../config/firebase-config'; 
+import * as Location from 'expo-location';
+import { addDoc, collection } from 'firebase/firestore';
+import { db } from '../config/firebase-config';
 import { useRouter } from 'expo-router';
-import * as ImageManipulator from 'expo-image-manipulator'; 
-import Header from '../components/header';  // นำเข้า Header Component
+import * as ImageManipulator from 'expo-image-manipulator';
+import Header from '../components/header';
 
 export default function RegisterShopScreen() {
   const router = useRouter();
@@ -22,13 +23,32 @@ export default function RegisterShopScreen() {
   const [phone, setPhone] = useState('');
   const [category, setCategory] = useState('');
   const [detail, setDetail] = useState('');
-  const [profileImageUri, setProfileImageUri] = useState(null); 
-  const [shopImageUri, setShopImageUri] = useState(null); 
-  const [uploading, setUploading] = useState(false); 
+  const [profileImageUri, setProfileImageUri] = useState(null);
+  const [shopImageUri, setShopImageUri] = useState(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleLocationPick = async () => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      alert('ไม่ได้รับอนุญาตให้เข้าถึงตำแหน่ง');
+      return;
+    }
+
+    try {
+      const location = await Location.getCurrentPositionAsync({});
+      const geocode = await Location.reverseGeocodeAsync(location.coords);
+      const place = geocode[0];
+      const fullAddress = `${place.name || ''} ${place.street || ''} ${place.district || ''} ${place.city || ''} ${place.region || ''}`.trim();
+      setPinAddress(fullAddress);
+    } catch (error) {
+      alert('เกิดข้อผิดพลาดในการดึงตำแหน่ง');
+      console.error(error);
+    }
+  };
 
   const handleImagePick = async (type) => {
     let permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (permissionResult.granted === false) {
+    if (!permissionResult.granted) {
       alert('คุณต้องให้สิทธิ์การเข้าถึงรูปภาพ');
       return;
     }
@@ -40,19 +60,14 @@ export default function RegisterShopScreen() {
       quality: 1,
     });
 
-    if (!result.cancelled && result.uri) {
-      const { uri } = result;
+    if (!result.cancelled && result.assets?.[0]?.uri) {
       const manipResult = await ImageManipulator.manipulateAsync(
-        uri,
+        result.assets[0].uri,
         [{ resize: { width: 800 } }],
         { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
       );
-      
-      if (type === 'profile') {
-        setProfileImageUri(manipResult.uri); 
-      } else if (type === 'shop') {
-        setShopImageUri(manipResult.uri); 
-      }
+      if (type === 'profile') setProfileImageUri(manipResult.uri);
+      else if (type === 'shop') setShopImageUri(manipResult.uri);
     } else {
       alert('ไม่พบภาพที่เลือก');
     }
@@ -65,102 +80,51 @@ export default function RegisterShopScreen() {
     }
 
     setUploading(true);
-    const formData = new FormData();
-
-    const profileFileUri = profileImageUri;
-    const profileFilename = profileFileUri.split('/').pop();
-    const profileFileExtension = profileFilename.split('.').pop();
-
-    formData.append('file', {
-      uri: profileFileUri,
-      name: profileFilename,
-      type: `image/${profileFileExtension}`,
-    });
-    formData.append('upload_preset', 'shop123');
-
     try {
-      const responseProfile = await axios.post(
-        'https://api.cloudinary.com/v1_1/dd0ro6iov/image/upload',
-        formData
-      );
+      const uploadToCloudinary = async (uri) => {
+        const formData = new FormData();
+        const filename = uri.split('/').pop();
+        const fileType = filename.split('.').pop();
+        formData.append('file', { uri, name: filename, type: `image/${fileType}` });
+        formData.append('upload_preset', 'shop123');
+        const response = await axios.post('https://api.cloudinary.com/v1_1/dd0ro6iov/image/upload', formData);
+        return response.data.secure_url;
+      };
 
-      const profileImageUrl = responseProfile.data.secure_url;
-      console.log("Profile image uploaded successfully:", profileImageUrl);
-
-      const shopFileUri = shopImageUri;
-      const shopFilename = shopFileUri.split('/').pop();
-      const shopFileExtension = shopFilename.split('.').pop();
-
-      formData.append('file', {
-        uri: shopFileUri,
-        name: shopFilename,
-        type: `image/${shopFileExtension}`,
-      });
-
-      const responseShop = await axios.post(
-        'https://api.cloudinary.com/v1_1/dd0ro6iov/image/upload',
-        formData
-      );
-
-      const shopImageUrl = responseShop.data.secure_url;
-      console.log("Shop image uploaded successfully:", shopImageUrl);
+      const profileImageUrl = await uploadToCloudinary(profileImageUri);
+      const shopImageUrl = await uploadToCloudinary(shopImageUri);
 
       await addDoc(collection(db, 'shops'), {
-        shopName,
-        ownerName,
-        address,
-        district,
-        amphoe,
-        province,
-        zipcode,
-        phone,
-        category,
-        detail,
-        pinAddress,
-        profileImageUrl,
-        shopImageUrl,
+        shopName, ownerName, address, district, amphoe, province, zipcode,
+        phone, category, detail, pinAddress,
+        profileImageUrl, shopImageUrl,
         createdAt: new Date()
       });
 
       Alert.alert('อัปโหลดรูปภาพสำเร็จ');
-      setUploading(false);
       router.push('/shop');
     } catch (error) {
       Alert.alert('การอัปโหลดล้มเหลว');
-      console.error('Upload error: ', error);
+      console.error(error);
+    } finally {
       setUploading(false);
     }
   };
 
-  const handleSubmit = async () => {
-    if (
-      !shopName.trim() ||
-      !ownerName.trim() ||
-      !address.trim() ||
-      !pinAddress.trim() ||
-      !district.trim() ||
-      !amphoe.trim() ||
-      !province.trim() ||
-      !zipcode.trim() ||
-      !phone.trim() ||
-      !category.trim() ||
-      !detail.trim()
-    ) {
+  const handleSubmit = () => {
+    if (!shopName || !ownerName || !address || !pinAddress || !district || !amphoe || !province || !zipcode || !phone || !category || !detail) {
       alert('กรุณากรอกข้อมูลให้ครบ');
       return;
     }
-
     handleUpload();
   };
 
   return (
     <View style={styles.root}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Header /> {/* เรียกใช้ Header Component */}
-
+        <Header />
         <Text style={styles.subtitle}>กรอกรายละเอียด</Text>
 
-        {/* Profile Image Picker */}
         <View style={styles.imagePickerContainer}>
           <TouchableOpacity style={styles.profileImageBtn} onPress={() => handleImagePick('profile')}>
             <Image source={require('../assets/profile.png')} style={styles.profileImage} />
@@ -170,7 +134,6 @@ export default function RegisterShopScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Form Inputs */}
         <TextInput placeholder="ชื่อร้าน" style={styles.input} value={shopName} onChangeText={setShopName} />
         <TextInput placeholder="ชื่อเจ้าของร้าน" style={styles.input} value={ownerName} onChangeText={setOwnerName} />
         <TextInput placeholder="ที่อยู่" style={styles.input} value={address} onChangeText={setAddress} />
@@ -181,20 +144,28 @@ export default function RegisterShopScreen() {
         <TextInput placeholder="เบอร์โทรศัพท์" style={styles.input} value={phone} onChangeText={setPhone} />
         <TextInput placeholder="ประเภท" style={styles.input} value={category} onChangeText={setCategory} />
         <TextInput placeholder="รายละเอียด" style={styles.input} value={detail} onChangeText={setDetail} />
-        <TextInput placeholder="ที่อยู่ตำแหน่ง (Pin)" style={styles.input} value={pinAddress} onChangeText={setPinAddress} />
 
-        {/* Shop Image Picker */}
-        <View style={styles.imagePickerContainer}>
-          <TouchableOpacity style={styles.shopImageBtn} onPress={() => handleImagePick('shop')}>
-            <Image source={require('../assets/plus.png')} style={styles.plusIcon} />
-            <Text>อัปโหลดรูปภาพรายละเอียดร้าน</Text>
+        <TouchableOpacity style={styles.pinInputRow} onPress={handleLocationPick}>
+          <Image source={require('../assets/location.png')} style={styles.locationIcon} />
+          <Text style={styles.pinText}>{pinAddress || 'ที่อยู่ตำแหน่ง (Pin)'}</Text>
+        </TouchableOpacity>
+
+        <View style={styles.imageBoxContainer}>
+          <TouchableOpacity style={styles.imageBox} onPress={() => handleImagePick('shop')}>
+            {shopImageUri ? (
+              <Image source={{ uri: shopImageUri }} style={styles.imageBoxPreview} />
+            ) : (
+              <>
+                <Image source={require('../assets/plus.png')} style={styles.imageBoxPlusIcon} />
+                <Text style={styles.imageBoxText}>อัปโหลดรูปภาพรายละเอียดร้าน</Text>
+              </>
+            )}
           </TouchableOpacity>
         </View>
 
-        {/* Submit Button */}
         <View style={styles.buttonRow}>
           <TouchableOpacity style={styles.cancelButton} onPress={() => router.back()}>
-            <Text style={{fontWeight: 'bold'}}>ยกเลิก</Text>
+            <Text style={{ fontWeight: 'bold' }}>ยกเลิก</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.confirmButton} onPress={handleSubmit}>
             <Text style={{ color: 'white', fontWeight: 'bold' }}>ยืนยัน</Text>
@@ -207,35 +178,51 @@ export default function RegisterShopScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#fff' },
-  header: {
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    padding: 10, 
-    backgroundColor: '#B7E305', 
-    width: '100%',  // ทำให้ header เต็มหน้าจอ
-    marginLeft: 0,  // กำหนดค่า margin-left ให้เป็น 0 เพื่อให้แน่ใจว่าไม่มีการห่างจากขอบซ้าย
-    marginRight: 0, // กำหนดค่า margin-right ให้เป็น 0 เพื่อให้แน่ใจว่าไม่มีการห่างจากขอบขวา
-  },
-  logo: { width: 40, height: 40 },
-  headerText: { flex: 1, fontSize: 18, fontWeight: 'bold', marginLeft: 10 },
   scrollContainer: { padding: 20, paddingBottom: 30 },
   subtitle: { textAlign: 'center', fontWeight: 'bold', fontSize: 16, marginVertical: 8 },
   input: {
-    backgroundColor: 'white',
-    paddingVertical: 8,  
-    paddingHorizontal: 12, 
-    borderRadius: 8,
-    marginBottom: 10,  
-    borderWidth: 1,
-    borderColor: '#222',
-    fontSize: 14,
+    backgroundColor: 'white', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8,
+    marginBottom: 10, borderWidth: 1, borderColor: '#222', fontSize: 14,
   },
   imagePickerContainer: { alignItems: 'center', marginBottom: 20 },
   profileImageBtn: { justifyContent: 'center', alignItems: 'center' },
   profileImage: { width: 100, height: 100, borderRadius: 50 },
   profileImageOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center' },
   plusIcon: { width: 30, height: 30 },
+  pinInputRow: {
+    flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#222',
+    borderRadius: 8, padding: 10, marginBottom: 15, backgroundColor: '#f9f9f9'
+  },
+  locationIcon: { width: 24, height: 24, marginRight: 10 },
+  pinText: { color: '#333', fontSize: 14 },
   buttonRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 16, columnGap: 40 },
   cancelButton: { backgroundColor: 'white', padding: 16, borderRadius: 12, minWidth: 160, alignItems: 'center' },
   confirmButton: { backgroundColor: '#c4df00', padding: 16, borderRadius: 12, minWidth: 160, alignItems: 'center' },
+  imageBoxContainer: { alignItems: 'center', marginVertical: 15 },
+  imageBox: {
+    width: 220,
+    height: 140,
+    borderWidth: 2,
+    borderColor: '#ccc',
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f9f9f9',
+    overflow: 'hidden',
+  },
+  imageBoxPreview: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  imageBoxPlusIcon: {
+    width: 30,
+    height: 30,
+    marginBottom: 8,
+    tintColor: '#888',
+  },
+  imageBoxText: {
+    fontSize: 13,
+    color: '#666',
+  },
 });
