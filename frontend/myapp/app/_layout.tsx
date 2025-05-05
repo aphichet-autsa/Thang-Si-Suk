@@ -28,6 +28,8 @@ export default function RootLayout() {
       <Stack.Screen name="registershop" options={{ headerShown: false }} />
       <Stack.Screen name="home" options={{ headerShown: false }} />
       <Stack.Screen name="lookpost" options={{ headerShown: false }} />
+      <Stack.Screen name="donate" options={{ headerShown: false }} />
+      
     </Stack>
   );
 }

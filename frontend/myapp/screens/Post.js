@@ -1,31 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Image, FlatList } from 'react-native';
-import { useNavigation } from '@react-navigation/native'; // ใช้ useNavigation hook จาก react-navigation
+import {
+  View, Text, TouchableOpacity, StyleSheet, ScrollView,
+  TextInput, Image, FlatList, Alert, Linking
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
-import Header from '../components/header';  // นำเข้า Header Component
-import BottomNav from '../components/BottomNav';  // นำเข้า BottomNav Component
+import * as Location from 'expo-location';
+import Header from '../components/header';
+import BottomNav from '../components/BottomNav';
+import { db, storage } from '../config/firebase-config';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 export default function PostScreen() {
-  const navigation = useNavigation(); // ใช้ useNavigation hook
-  const [images, setImages] = useState([]); // เก็บภาพที่เลือก
+  const navigation = useNavigation();
+  const [images, setImages] = useState([]);
   const [caption, setCaption] = useState('');
   const [hasPermission, setHasPermission] = useState(null);
+  const [address, setAddress] = useState('');
+  const [coords, setCoords] = useState(null);
 
   useEffect(() => {
     const checkPermissions = async () => {
-      // ตรวจสอบสิทธิ์การเข้าถึงกล้อง
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
-      if (status !== 'granted') {
-        alert('กรุณาอนุญาตให้ใช้กล้อง');
-      } else {
-        setHasPermission(true);
-      }
+      if (status !== 'granted') alert('กรุณาอนุญาตให้ใช้กล้อง');
+      else setHasPermission(true);
 
-      // ตรวจสอบสิทธิ์การเข้าถึงแกลเลอรี
       const { status: mediaStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (mediaStatus !== 'granted') {
-        alert('กรุณาอนุญาตให้เข้าถึงแกลเลอรี');
-      }
+      if (mediaStatus !== 'granted') alert('กรุณาอนุญาตให้เข้าถึงแกลเลอรี');
     };
     checkPermissions();
   }, []);
@@ -35,17 +37,11 @@ export default function PostScreen() {
       const result = await ImagePicker.launchCameraAsync({
         allowsEditing: false,
         quality: 1,
-        mediaTypes: ImagePicker.MediaTypeImages,
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
       });
-
-      console.log("Camera result:", result); // ตรวจสอบผลลัพธ์จากการถ่ายภาพ
-      if (!result.cancelled && result.assets && result.assets[0].uri) {
-        setImages((prev) => [...prev, result.assets[0].uri]);  // ดึง URI จาก assets[0].uri
-      } else {
-        console.log("ไม่สามารถรับ URI ได้จากกล้อง");
+      if (!result.canceled && result.assets?.[0]?.uri) {
+        setImages((prev) => [...prev, result.assets[0].uri]);
       }
-    } else {
-      alert('กรุณาอนุญาตให้ใช้กล้อง');
     }
   };
 
@@ -54,46 +50,112 @@ export default function PostScreen() {
       const result = await ImagePicker.launchImageLibraryAsync({
         allowsEditing: false,
         quality: 1,
-        mediaTypes: ImagePicker.MediaTypeImages,
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
       });
-
-      console.log("Gallery result:", result); // ตรวจสอบผลลัพธ์จากการเลือกภาพ
-      if (!result.cancelled && result.assets && result.assets[0].uri) {
-        setImages((prev) => [...prev, result.assets[0].uri]);  // ดึง URI จาก assets[0].uri
-      } else {
-        console.log("ไม่สามารถรับ URI ได้จากแกลเลอรี");
+      if (!result.canceled && result.assets?.[0]?.uri) {
+        setImages((prev) => [...prev, result.assets[0].uri]);
       }
-    } else {
-      alert('กรุณาอนุญาตให้เข้าถึงแกลเลอรี');
     }
   };
 
-  const renderImageItem = ({ item }) => {
-    return (
-      <View style={styles.imageContainer}>
-        <Image source={{ uri: item }} style={styles.image} resizeMode="cover" />
-      </View>
-    );
+  const pickLocationHandler = async () => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      alert('ไม่ได้รับอนุญาตให้เข้าถึงตำแหน่ง');
+      return;
+    }
+
+    try {
+      const loc = await Location.getCurrentPositionAsync({});
+      if (!loc || !loc.coords) throw new Error('ไม่สามารถดึงตำแหน่งได้');
+
+      const geocode = await Location.reverseGeocodeAsync(loc.coords);
+      const place = geocode?.[0] || {};
+      const fullAddress = `${place.name || ''} ${place.street || ''} ${place.district || ''} ${place.city || ''} ${place.region || ''}`.trim();
+
+      setCoords(loc.coords);
+      setAddress(fullAddress);
+    } catch (err) {
+      console.error('Location error:', err);
+      alert('เกิดข้อผิดพลาดขณะดึงตำแหน่ง');
+    }
   };
 
-  if (hasPermission === null) {
-    return <View />;
-  }
+  const openMaps = () => {
+    if (coords) {
+      const url = `https://www.google.com/maps/dir/?api=1&destination=${coords.latitude},${coords.longitude}`;
+      Linking.openURL(url);
+    }
+  };
 
-  if (hasPermission === false) {
-    return <Text>ไม่มีสิทธิ์เข้าถึงกล้อง</Text>;
-  }
+  const uploadImagesAndSavePost = async () => {
+    try {
+      if (!caption || images.length === 0) {
+        Alert.alert('กรุณาใส่คำบรรยายและเลือกรูปอย่างน้อย 1 รูป');
+        return;
+      }
+
+      const uploadedUrls = [];
+
+      for (const uri of images) {
+        const response = await fetch(uri);
+        const blob = await response.blob();
+        const imageName = `post_${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
+        const storageRef = ref(storage, `posts/${imageName}`);
+        await uploadBytes(storageRef, blob);
+        const downloadUrl = await getDownloadURL(storageRef);
+        uploadedUrls.push(downloadUrl);
+      }
+
+      await addDoc(collection(db, 'PostSale'), {
+        caption,
+        imageUrls: uploadedUrls,
+        address,
+        coords,
+        createdAt: serverTimestamp(),
+      });
+
+      Alert.alert('โพสต์สำเร็จ!');
+      setCaption('');
+      setImages([]);
+      setAddress('');
+      setCoords(null);
+      navigation.navigate('lookpost');
+    } catch (error) {
+      console.error('Post error:', error);
+      Alert.alert('เกิดข้อผิดพลาดในการโพสต์');
+    }
+  };
+
+  const renderImageItem = ({ item, index }) => (
+    <TouchableOpacity
+      onPress={() =>
+        Alert.alert('ลบรูปภาพ', 'คุณต้องการลบรูปภาพนี้ใช่หรือไม่?', [
+          { text: 'ยกเลิก', style: 'cancel' },
+          {
+            text: 'ลบ',
+            style: 'destructive',
+            onPress: () => setImages((prev) => prev.filter((_, i) => i !== index)),
+          },
+        ])
+      }
+      style={styles.imageContainer}
+    >
+      <Image source={{ uri: item }} style={styles.image} resizeMode="cover" />
+      <View style={styles.imageOverlay}>
+        <Text style={styles.imageOverlayText}>แตะเพื่อลบ</Text>
+      </View>
+    </TouchableOpacity>
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
-      {/* 🔥 SubHeader */}
-      <Header /> {/* เรียกใช้ Header Component */}
+      <Header />
       <View style={styles.subHeader}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>{/* ใช้ goBack ของ useNavigation */}
+        <TouchableOpacity onPress={() => navigation.goBack()}>
           <Image source={require('../assets/back.png')} style={styles.smallIcon} />
         </TouchableOpacity>
         <Text style={styles.subHeaderTitle}>โพสต์</Text>
-        {/* ไอคอนกล้องและรูปภาพ */}
         <View style={styles.iconContainer}>
           <TouchableOpacity onPress={openCamera}>
             <Image source={require('../assets/camera.png')} style={styles.smallIcon} />
@@ -104,7 +166,6 @@ export default function PostScreen() {
         </View>
       </View>
 
-      {/* 🔥 ScrollView ส่วนกลาง */}
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <TextInput
           style={styles.captionInput}
@@ -113,8 +174,6 @@ export default function PostScreen() {
           onChangeText={setCaption}
           multiline
         />
-
-        {/* แสดงภาพที่เลือก */}
         <FlatList
           data={images}
           renderItem={renderImageItem}
@@ -122,24 +181,25 @@ export default function PostScreen() {
           horizontal
           style={styles.imageList}
         />
-
-        {/* เพิ่มตำแหน่ง */}
-        <View style={styles.locationRow}>
+        <TouchableOpacity style={styles.locationRow} onPress={pickLocationHandler}>
           <Image source={require('../assets/location.png')} style={styles.locationIcon} />
-          <Text style={styles.addLocation}>เพิ่มตำแหน่งของคุณ</Text>
-        </View>
-
+          <Text style={styles.addLocation}>{address || 'เพิ่มตำแหน่งของคุณ'}</Text>
+        </TouchableOpacity>
+        {coords && (
+          <TouchableOpacity style={styles.routeButton} onPress={openMaps}>
+            <Text style={styles.routeButtonText}>ดูเส้นทาง</Text>
+          </TouchableOpacity>
+        )}
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.cancelButton}>
             <Text style={styles.buttonText}>ยกเลิก</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.confirmButton}>
+          <TouchableOpacity style={styles.confirmButton} onPress={uploadImagesAndSavePost}>
             <Text style={styles.buttonText}>ยืนยัน</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
-
-      <BottomNav /> {/* เรียกใช้ BottomNav Component */}
+      <BottomNav />
     </View>
   );
 }
@@ -187,6 +247,7 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     marginRight: 20,
+    position: 'relative',
   },
   image: {
     width: 120,
@@ -195,6 +256,19 @@ const styles = StyleSheet.create({
     margin: 5,
     borderWidth: 1,
     borderColor: '#ddd',
+  },
+  imageOverlay: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 10,
+  },
+  imageOverlayText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   locationRow: {
     flexDirection: 'row',
@@ -209,6 +283,17 @@ const styles = StyleSheet.create({
   addLocation: {
     fontSize: 16,
     color: '#333',
+  },
+  routeButton: {
+    marginTop: 10,
+    backgroundColor: '#4CAF50',
+    padding: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  routeButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
   buttonContainer: {
     flexDirection: 'row',
