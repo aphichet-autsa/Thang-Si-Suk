@@ -19,6 +19,7 @@ export default function PostScreen() {
   const [hasPermission, setHasPermission] = useState(null);
   const [address, setAddress] = useState('');
   const [coords, setCoords] = useState(null);
+  const [postType, setPostType] = useState('buy');
 
   useEffect(() => {
     const checkPermissions = async () => {
@@ -115,6 +116,7 @@ export default function PostScreen() {
         imageUrls: uploadedUrls,
         address,
         coords: coords || null,
+        type: postType,
         createdAt: serverTimestamp(),
       });
 
@@ -170,6 +172,22 @@ export default function PostScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={{ flexDirection: 'row', justifyContent: 'center', marginVertical: 10 }}>
+          <TouchableOpacity
+            style={[styles.postTypeButton, postType === 'buy' && styles.postTypeButtonActive]}
+            onPress={() => setPostType('buy')}
+          >
+            <Text style={[styles.postTypeText, postType === 'buy' && styles.postTypeTextActive]}>ซื้อขาย</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.postTypeButton, postType === 'donate' && styles.postTypeButtonActive]}
+            onPress={() => setPostType('donate')}
+          >
+            <Text style={[styles.postTypeText, postType === 'donate' && styles.postTypeTextActive]}>บริจาค</Text>
+          </TouchableOpacity>
+        </View>
+
         <TextInput
           style={styles.captionInput}
           placeholder="เพิ่มคำบรรยาย..."
@@ -208,119 +226,128 @@ export default function PostScreen() {
 }
 
 const styles = StyleSheet.create({
-  subHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  subHeader: 
+  {
+    flexDirection: 'row', 
+    alignItems: 'center', 
     justifyContent: 'space-between',
-    paddingHorizontal: 15,
+    paddingHorizontal: 15, 
     paddingVertical: 10,
-    backgroundColor: '#B7E305',
-    borderBottomWidth: 1,
+    backgroundColor: '#B7E305', 
+    borderBottomWidth: 1, 
     borderColor: '#ddd',
   },
   subHeaderTitle: {
-    fontSize: 25,
-    fontWeight: 'bold',
+    fontSize: 25, 
+    fontWeight: 'bold', 
     color: '#fff',
   },
-  smallIcon: {
-    width: 40,
-    height: 40,
-  },
-  iconContainer: {
-    flexDirection: 'row',
+  smallIcon: 
+  { width: 40, 
+    height: 40 },
+  iconContainer: 
+  { flexDirection:'row', 
     justifyContent: 'space-between',
-    width: 90,
-  },
-  scrollContent: {
-    padding: 20,
-    paddingBottom: 150,
-    backgroundColor: '#fff',
-  },
-  captionInput: {
+    width: 90 },
+  scrollContent: 
+  { padding: 20, 
+    paddingBottom: 150, 
+    backgroundColor: '#fff' },
+  captionInput: 
+  {
     marginBottom: 15,
-    padding: 10,
-    fontSize: 16,
+     padding: 10, 
+     fontSize: 16,
     backgroundColor: '#f8f8f8',
+     borderRadius: 10,
+  },
+  imageList: 
+  { marginTop: 20, 
+    marginBottom: 15 },
+  imageContainer: 
+  { marginRight: 20, 
+    position: 'relative' },
+  image: 
+  { width: 120, 
+    height: 120, 
+    borderRadius: 10, 
+    margin: 5, borderWidth: 1, 
+    borderColor: '#ddd' },
+  imageOverlay: 
+  {
+    position: 'absolute', 
+    top: 0, 
+    left: 0, 
+    right: 0, 
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)', 
+    justifyContent: 'center', 
+    alignItems: 'center', 
     borderRadius: 10,
   },
-  imageList: {
-    marginTop: 20,
-    marginBottom: 15,
-  },
-  imageContainer: {
-    marginRight: 20,
-    position: 'relative',
-  },
-  image: {
-    width: 120,
-    height: 120,
-    borderRadius: 10,
-    margin: 5,
-    borderWidth: 1,
-    borderColor: '#ddd',
-  },
-  imageOverlay: {
-    position: 'absolute',
-    top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 10,
-  },
-  imageOverlayText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  locationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  locationIcon: {
-    width: 24,
-    height: 24,
-    marginRight: 10,
-  },
-  addLocation: {
-    fontSize: 16,
-    color: '#333',
-  },
-  routeButton: {
-    marginTop: 10,
-    backgroundColor: '#4CAF50',
-    padding: 10,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  routeButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 30,
-  },
-  cancelButton: {
-    flex: 1,
-    backgroundColor: '#ededed',
+  imageOverlayText: 
+  { color: '#fff', 
+    fontSize: 14, 
+    fontWeight: 'bold' },
+  locationRow: 
+  { flexDirection: 'row', 
+    alignItems: 'center', 
+    marginTop: 10 },
+  locationIcon: 
+  { width: 24, 
+    height: 24, 
+    marginRight: 10 },
+  addLocation: 
+  { fontSize: 16, 
+    color: '#333' },
+  routeButton: 
+  { marginTop: 10, 
+    backgroundColor: '#4CAF50', 
+    padding: 10, 
+    borderRadius: 10, 
+    alignItems: 'center' },
+  routeButtonText: 
+  { color: '#fff', 
+    fontWeight: 'bold' },
+  buttonContainer: 
+  { flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    marginTop: 30 },
+  cancelButton: 
+  {
+    flex: 1, 
+    backgroundColor: '#ededed', 
     marginRight: 10,
     padding: 15,
-    alignItems: 'center',
-    borderRadius: 10,
+     alignItems: 'center', 
+     borderRadius: 10,
   },
   confirmButton: {
-    flex: 1,
-    backgroundColor: '#B7E305',
+    flex: 1, 
+    backgroundColor: '#B7E305', 
     marginLeft: 10,
-    padding: 15,
-    alignItems: 'center',
+    padding: 15, 
+    alignItems: 'center', 
     borderRadius: 10,
   },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
+  buttonText: 
+  { fontSize: 16, 
+    fontWeight: 'bold' },
+  postTypeButton: 
+  {
+    paddingVertical: 8, 
+    paddingHorizontal: 20,
+    backgroundColor: '#E0E0E0', 
+    borderRadius: 20,
+    marginHorizontal: 10,
+  },
+  postTypeButtonActive: {
+    backgroundColor: '#B7E305',
+  },
+  postTypeText: {
+    fontWeight: 'bold', color: '#555',
+  },
+  postTypeTextActive: {
+    color: '#000',
   },
 });
