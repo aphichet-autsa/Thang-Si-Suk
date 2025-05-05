@@ -166,7 +166,10 @@ const MyShopScreen = () => {
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#fff' },
+    container: {
+    flex: 1,
+    backgroundColor: '#fff' 
+  },
     content: { padding: 20, alignItems: 'center', paddingBottom: 100 },
     profile: { width: 80, height: 80, borderRadius: 40, marginBottom: 10 },
     name: { fontWeight: 'bold', fontSize: 16, marginBottom: 10 },
