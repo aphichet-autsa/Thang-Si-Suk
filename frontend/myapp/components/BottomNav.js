@@ -28,7 +28,7 @@ export default function BottomNav() {
         <Image source={require('../assets/plus.png')} style={styles.bottomIconCenter} />
       </TouchableOpacity>
       <NavItem icon={require('../assets/location.png')} label="ร้านใกล้ฉัน" active={activeIndex === 3} onPress={() => handleNavItemPress(3, '/location')} />
-      <NavItem icon={require('../assets/test-account.png')} label="ฉัน" active={activeIndex === 4} onPress={() => handleNavItemPress(4, '/profile')} />
+      <NavItem icon={require('../assets/test-account.png')} label="ฉัน" active={activeIndex === 4} onPress={() => handleNavItemPress(4, '/ShopProfileScreen')} />
     </View>
   );
 }
