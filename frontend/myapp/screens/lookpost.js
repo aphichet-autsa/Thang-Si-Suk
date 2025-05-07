@@ -20,7 +20,6 @@ const LookPost = () => {
     };
     fetchPosts();
   }, []);
- //
   const renderPost = ({ item }) => (
     <View style={styles.postCard}>
       <View style={styles.postHeader}>
