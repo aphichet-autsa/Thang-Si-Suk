@@ -39,7 +39,7 @@ function ContractScreen() {
       }
 
       const userRef = doc(db, 'users', user.uid);
-      const docSnap = await getDoc(userRef);  // ✅ เพิ่มตรงนี้
+      const docSnap = await getDoc(userRef);
 
       const updateData = {
         email: user.email,
@@ -51,6 +51,7 @@ function ContractScreen() {
         name: user.displayName || '',
         password: passedPassword || '',
         phoneNumber: phone,
+        backupPhoneNumber: backupPhone,
         role: 'user',
         uid: user.uid,
       };
@@ -76,7 +77,7 @@ function ContractScreen() {
       }
 
       setErrorMessage('');
-      router.replace('/Login');
+      router.replace('/login');
     } catch (error) {
       console.error('เกิดข้อผิดพลาด:', error);
       setErrorMessage('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
@@ -84,15 +85,8 @@ function ContractScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ImageBackground
-        source={require('../assets/bg.png')}
-        style={styles.background}
-        resizeMode="cover"
-      >
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <ImageBackground source={require('../assets/bg.png')} style={styles.background} resizeMode="cover">
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <View style={styles.container}>
             <Image source={require('../assets/logo2.png')} style={styles.logo} resizeMode="contain" />
@@ -146,7 +140,7 @@ function ContractScreen() {
                 onChangeText2={setBackupPhone}
               />
 
-              <TouchableOpacity style={styles.button}  onPress={() => router.push('/login')}>
+              <TouchableOpacity style={styles.button} onPress={handleSubmit}>
                 <Text style={styles.buttonText}>ยืนยัน</Text>
               </TouchableOpacity>
             </View>
@@ -180,8 +174,6 @@ function ContactRow({ icon, label1, label2, value1, value2, onChangeText1, onCha
     </View>
   );
 }
-
-export default ContractScreen;
 
 const styles = StyleSheet.create({
   background: {
@@ -270,3 +262,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+
+export default ContractScreen;
