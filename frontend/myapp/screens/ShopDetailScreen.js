@@ -1,23 +1,55 @@
-import React from 'react';
-import { View, Text, Image, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, Image, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../config/firebase-config';
 
-export default function ShopDetailScreen(props) {
+export default function ShopDetailScreen() {
   const router = useRouter();
-  // รับข้อมูลร้านจาก props หรือ params
-  const params = useLocalSearchParams();
-  const shop = props.shop || params.shop ? JSON.parse(params.shop) : {};
+  const { shopId } = useLocalSearchParams();
+  const [shop, setShop] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  let images = [];
-  if (Array.isArray(shop.imageUrl)) {
-    images = shop.imageUrl;
-  } else if (shop.imageUrl) {
-    images = [shop.imageUrl];
+  useEffect(() => {
+    const fetchShop = async () => {
+      try {
+        const docRef = doc(db, 'shops', shopId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setShop(docSnap.data());
+        } else {
+          console.warn('ไม่พบข้อมูลร้าน');
+        }
+      } catch (error) {
+        console.error('ดึงข้อมูลร้านล้มเหลว', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (shopId) fetchShop();
+  }, [shopId]);
+
+  if (loading) {
+    return (
+      <View style={styles.root}>
+        <Text style={{ textAlign: 'center', marginTop: 40 }}>กำลังโหลดข้อมูล...</Text>
+      </View>
+    );
   }
+
+  if (!shop) {
+    return (
+      <View style={styles.root}>
+        <Text style={{ textAlign: 'center', marginTop: 40 }}>ไม่พบข้อมูลร้าน</Text>
+      </View>
+    );
+  }
+
+  const images = Array.isArray(shop.shopImageUrls) ? shop.shopImageUrls : [];
 
   return (
     <View style={styles.root}>
-      {/* Header สีเขียวสด */}
       <View style={styles.headerGreen}>
         <Image source={require('../assets/logo2.png')} style={styles.logo} />
         <Text style={styles.headerText}>THANGSISUK</Text>
@@ -30,7 +62,7 @@ export default function ShopDetailScreen(props) {
           </TouchableOpacity>
         </View>
       </View>
-      {/* แถบหัวข้อ ร้านรับซื้อ */}
+
       <View style={styles.titleRow}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.push('/shop')}>
           <Image source={require('../assets/back.png')} style={styles.backIcon} />
@@ -40,31 +72,32 @@ export default function ShopDetailScreen(props) {
           <Text style={styles.pageTitle}>ร้านรับซื้อ</Text>
         </View>
       </View>
+
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.card}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
             <Image
-              source={shop.avatarUrl ? { uri: shop.avatarUrl } : require('../assets/profile.png')}
+              source={shop.profileImageUrl ? { uri: shop.profileImageUrl } : require('../assets/profile.png')}
               style={styles.avatar}
             />
             <View style={{ marginLeft: 10 }}>
-              <Text style={styles.label}>ชื่อร้าน : <Text style={styles.value}>{shop.shopName || ''}</Text></Text>
+              <Text style={styles.label}>ชื่อร้าน: <Text style={styles.value}>{shop.shopName}</Text></Text>
+              <Text style={styles.label}>เจ้าของ: <Text style={styles.value}>{shop.ownerName}</Text></Text>
             </View>
           </View>
-          <Text style={styles.label}>ที่อยู่ : <Text style={styles.value}>{shop.address || ''}</Text></Text>
-          <Text style={styles.label}>ประเภทที่รับ : <Text style={styles.value}>{shop.category || ''}</Text></Text>
-          <Text style={styles.label}>เบอร์ติดต่อ : <Text style={styles.value}>{shop.phone || ''}</Text></Text>
 
-          {/* รูปภาพหลายรูปแบบ grid */}
+          <Text style={styles.label}>ที่อยู่: <Text style={styles.value}>{shop.address}</Text></Text>
+          <Text style={styles.label}>ตำบล/อำเภอ/จังหวัด: <Text style={styles.value}>{shop.amphoe}, {shop.district}, {shop.province} {shop.zipcode}</Text></Text>
+          <Text style={styles.label}>ตำแหน่ง PIN: <Text style={styles.value}>{shop.pinAddress}</Text></Text>
+          <Text style={styles.label}>ประเภทที่รับ: <Text style={styles.value}>{shop.category}</Text></Text>
+          <Text style={styles.label}>เบอร์ติดต่อ: <Text style={styles.value}>{shop.phone}</Text></Text>
+          <Text style={styles.label}>รายละเอียด: <Text style={styles.value}>{shop.detail}</Text></Text>
+
+          {/* แสดงภาพร้านหลายภาพ */}
           {images.length > 0 && (
             <View style={styles.imageGrid}>
               {images.map((img, idx) => (
-                <Image
-                  key={idx}
-                  source={{ uri: img }}
-                  style={styles.gridImage}
-                  resizeMode="cover"
-                />
+                <Image key={idx} source={{ uri: img }} style={styles.gridImage} resizeMode="cover" />
               ))}
             </View>
           )}
@@ -121,9 +154,7 @@ const styles = StyleSheet.create({
   backIcon: { width: 28, height: 28 },
   shopIcon: { width: 36, height: 36, marginRight: 8 },
   pageTitle: { fontSize: 20, fontWeight: 'bold', color: '#222' },
-  scrollContainer: {
-    padding: 16,
-  },
+  scrollContainer: { padding: 16 },
   card: {
     backgroundColor: '#fff',
     borderRadius: 16,

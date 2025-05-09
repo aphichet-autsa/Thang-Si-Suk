@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Image, TextInput } from 'react-native';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '../config/firebase-config';
-import { useRouter } from 'expo-router';  // ใช้สำหรับการนำทางใน Expo
-import Header from '../components/header';  // นำเข้า Header Component
-import BottomNav from '../components/BottomNav';  // นำเข้า BottomNav Component
+import { useRouter } from 'expo-router';
+import Header from '../components/header';
+import BottomNav from '../components/BottomNav';
 
 export default function ShopScreen() {
   const [shops, setShops] = useState([]);
@@ -20,7 +20,6 @@ export default function ShopScreen() {
     return () => unsubscribe();
   }, []);
 
-  // ฟิลเตอร์ร้านค้าตาม search
   const filteredShops = shops.filter(shop =>
     shop.shopName?.toLowerCase().includes(search.toLowerCase()) ||
     shop.address?.toLowerCase().includes(search.toLowerCase()) ||
@@ -29,12 +28,14 @@ export default function ShopScreen() {
 
   return (
     <View style={styles.root}>
-      <Header /> {/* เรียกใช้ Header Component */}
+      <Header />
 
-      {/* Section Title + สมัครร้าน */}
+      {/* Section Title */}
       <View style={styles.titleRow}>
-        <Image source={require('../assets/shop.png')} style={styles.shopIcon} />
-        <Text style={styles.pageTitle}>ร้านรับซื้อ</Text>
+        <View style={styles.titleLeft}>
+          <Image source={require('../assets/shop.png')} style={styles.shopIcon} />
+          <Text style={styles.pageTitle}>ร้านรับซื้อ</Text>
+        </View>
         <TouchableOpacity style={styles.signupButton} onPress={() => router.push('/registershop')}>
           <Text style={styles.signupText}>สมัครร้านรับซื้อ</Text>
         </TouchableOpacity>
@@ -59,16 +60,19 @@ export default function ShopScreen() {
           filteredShops.map((shop, idx) => (
             <View key={shop.id || idx} style={styles.card}>
               <Image
-                source={shop.imageUrl ? { uri: shop.imageUrl } : require('../assets/profile.png')}
+                source={shop.profileImageUrl ? { uri: shop.profileImageUrl } : require('../assets/profile.png')}
                 style={styles.avatar}
               />
               <View style={{ flex: 1 }}>
-                <Text style={styles.label}>ชื่อร้าน : <Text style={styles.value}>{shop.shopName || ''}</Text></Text>
-                <Text style={styles.label}>ที่อยู่ : <Text style={styles.value}>{shop.address || ''}</Text></Text>
-                <Text style={styles.label}>ประเภทที่รับ : <Text style={styles.value}>{shop.category || ''}</Text></Text>
-                <Text style={styles.label}>เบอร์ติดต่อ : <Text style={styles.value}>{shop.phone || ''}</Text></Text>
+                <Text style={styles.label}>ชื่อร้าน: <Text style={styles.value}>{shop.shopName || ''}</Text></Text>
+                <Text style={styles.label}>ที่อยู่: <Text style={styles.value}>{shop.address || ''}</Text></Text>
+                <Text style={styles.label}>ประเภทที่รับ: <Text style={styles.value}>{shop.category || ''}</Text></Text>
+                <Text style={styles.label}>เบอร์ติดต่อ: <Text style={styles.value}>{shop.phone || ''}</Text></Text>
               </View>
-              <TouchableOpacity style={styles.detailButton} onPress={() => router.push({ pathname: '/detail', params: { shop: JSON.stringify(shop) } })}>
+              <TouchableOpacity
+                style={styles.detailButton}
+                onPress={() => router.push({ pathname: '/detail', params: { shopId: shop.id } })}
+              >
                 <Text style={styles.detailButtonText}>เพิ่มเติม</Text>
               </TouchableOpacity>
             </View>
@@ -76,170 +80,124 @@ export default function ShopScreen() {
         )}
       </ScrollView>
 
-      <BottomNav /> {/* เรียกใช้ BottomNav Component */}
+      <BottomNav />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#fff' },
-  header: { flexDirection: 'row', alignItems: 'center', padding: 10, backgroundColor: '#B7E305' },
-  logo: { width: 40, height: 40 },
-  headerText: { flex: 1, fontSize: 18, fontWeight: 'bold', marginLeft: 10 },
-  headerIcons: { flexDirection: 'row' },
-  icon: { width: 24, height: 24, marginLeft: 10 },
-  titleRow: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    marginTop: 8, 
-    marginBottom: 10, 
-    paddingHorizontal: 16, 
-    justifyContent: 'space-between' // จัดตำแหน่งให้ปุ่มอยู่ทางขวา
+
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 10,
+    paddingHorizontal: 16,
+    justifyContent: 'space-between',
   },
-  shopIcon: { 
-    width: 28, 
-    height: 28, 
-    marginRight: 8 
+  titleLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  pageTitle: { 
-    fontWeight: 'bold', 
-    fontSize: 18 
+  shopIcon: {
+    width: 28,
+    height: 28,
+    marginRight: 8,
   },
-  signupButton: { 
-    marginLeft: 'auto', 
-    backgroundColor: '#fff', 
-    paddingHorizontal: 16, 
-    paddingVertical: 8, 
-    borderRadius: 20, 
-    borderColor: '#B7E305', 
+  pageTitle: {
+    fontWeight: 'bold',
+    fontSize: 18,
+    color: '#222',
+  },
+  signupButton: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderColor: '#B7E305',
     borderWidth: 1,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 }, 
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 2,
     elevation: 2,
   },
-  signupText: { 
-    color: '#222', 
-    fontWeight: 'bold' 
+  signupText: {
+    color: '#222',
+    fontWeight: 'bold',
   },
-  searchContainer: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    backgroundColor: '#f5f9e4', 
-    borderRadius: 20, 
-    paddingHorizontal: 16, 
-    marginHorizontal: 16, 
-    marginBottom: 12 
+
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f5f9e4',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    marginHorizontal: 16,
+    marginBottom: 12,
   },
-  searchInput: { 
-    flex: 1, 
-    height: 40, 
-    backgroundColor: 'transparent', 
-    borderWidth: 0, 
-    fontSize: 15 
+  searchInput: {
+    flex: 1,
+    height: 40,
+    backgroundColor: 'transparent',
+    fontSize: 15,
   },
-  searchIcon: { 
-    width: 22, 
-    height: 22, 
-    tintColor: '#888' 
+  searchIcon: {
+    width: 22,
+    height: 22,
+    tintColor: '#888',
   },
-  listContainer: { 
-    paddingBottom: 120, 
-    paddingHorizontal: 8 
+
+  listContainer: {
+    paddingBottom: 120,
+    paddingHorizontal: 8,
   },
-  card: { 
-    flexDirection: 'row', 
-    alignItems: 'flex-start', 
-    backgroundColor: 'white', 
-    borderRadius: 18, 
-    padding: 16, 
-    marginBottom: 18, 
-    shadowColor: '#000', 
-    shadowOffset: { width: 0, height: 2 }, 
-    shadowOpacity: 0.07, 
-    shadowRadius: 2, 
-    elevation: 2, 
-    borderWidth: 1, 
-    borderColor: '#e5e5e5' 
+  card: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: 'white',
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 18,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 2,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#e5e5e5',
   },
-  avatar: { 
-    width: 52, 
-    height: 52, 
-    borderRadius: 26, 
-    marginRight: 14, 
-    borderWidth: 2, 
-    borderColor: '#B7E305', 
-    backgroundColor: '#f5f9e4' 
+  avatar: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    marginRight: 14,
+    borderWidth: 2,
+    borderColor: '#B7E305',
+    backgroundColor: '#f5f9e4',
   },
-  label: { 
-    color: '#888', 
-    fontWeight: 'bold', 
-    fontSize: 15, 
-    marginBottom: 2 
+  label: {
+    color: '#888',
+    fontWeight: 'bold',
+    fontSize: 15,
+    marginBottom: 2,
   },
-  value: { 
-    color: '#444', 
-    fontWeight: 'normal' 
+  value: {
+    color: '#444',
+    fontWeight: 'normal',
   },
-  detailButton: { 
-    backgroundColor: '#B7E305', 
-    borderRadius: 6, 
-    alignItems: 'center', 
-    marginTop: 8, 
-    alignSelf: 'flex-end', 
-    paddingHorizontal: 18, 
-    paddingVertical: 4 
+  detailButton: {
+    backgroundColor: '#B7E305',
+    borderRadius: 6,
+    alignItems: 'center',
+    marginTop: 8,
+    alignSelf: 'flex-end',
+    paddingHorizontal: 18,
+    paddingVertical: 4,
   },
-  detailButtonText: { 
-    color: '#222', 
-    fontWeight: 'bold' 
-  },
-  bottomNav: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-around', 
-    alignItems: 'center', 
-    backgroundColor: 'white', 
-    paddingVertical: 5, 
-    borderTopWidth: 1, 
-    borderColor: '#eee', 
-    shadowColor: '#000', 
-    shadowOffset: { width: 0, height: -2 }, 
-    shadowOpacity: 0.08, 
-    shadowRadius: 2, 
-    elevation: 6 
-  },
-  navItem: { 
-    flex: 1, 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    paddingVertical: 5 
-  },
-  navItemCenter: { 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    marginTop: -16, 
-    flex: 1 
-  },
-  bottomIcon: { 
-    width: 32, 
-    height: 32 
-  },
-  bottomIconCenter: { 
-    width: 44, 
-    height: 44, 
-    borderRadius: 22, 
-    backgroundColor: 'white', 
-    shadowColor: '#000', 
-    shadowOffset: { width: 0, height: 2 }, 
-    shadowOpacity: 0.15, 
-    shadowRadius: 2, 
-    elevation: 4, 
-    marginBottom: 2 
-  },
-  bottomText: { 
-    fontSize: 12, 
-    textAlign: 'center', 
-    marginTop: 2 
+  detailButtonText: {
+    color: '#222',
+    fontWeight: 'bold',
   },
 });
