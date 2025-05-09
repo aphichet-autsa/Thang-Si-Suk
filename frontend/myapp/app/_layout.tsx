@@ -23,13 +23,18 @@ export default function RootLayout() {
       <Stack.Screen name="forgotpassword" options={{ headerShown: false }} />
       <Stack.Screen name="contract" options={{ headerShown: false }} />
       <Stack.Screen name="shop" options={{ headerShown: false }} />
-      <Stack.Screen name="post" options={{ headerShown: false }} />
+      <Stack.Screen name="Post" options={{ headerShown: false }} />
       <Stack.Screen name="detail" options={{ headerShown: false }} />
       <Stack.Screen name="registershop" options={{ headerShown: false }} />
       <Stack.Screen name="home" options={{ headerShown: false }} />
       <Stack.Screen name="lookpost" options={{ headerShown: false }} />
       <Stack.Screen name="donate" options={{ headerShown: false }} />
+<<<<<<< HEAD
       <Stack.Screen name="nearshops" options={{ headerShown: false }} />
+=======
+      <Stack.Screen name="NoShop" options={{ headerShown: false }} />
+
+>>>>>>> d32e889f64048138df5d38f3a37c45173ce9717d
     </Stack>
   );
 }
