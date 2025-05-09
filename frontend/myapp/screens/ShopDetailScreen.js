@@ -32,7 +32,7 @@ export default function ShopDetailScreen(props) {
       </View>
       {/* แถบหัวข้อ ร้านรับซื้อ */}
       <View style={styles.titleRow}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.push('/home')}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.push('/shop')}>
           <Image source={require('../assets/back.png')} style={styles.backIcon} />
         </TouchableOpacity>
         <View style={styles.centerTitle}>
