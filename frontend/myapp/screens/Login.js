@@ -66,10 +66,10 @@ const LoginScreen = () => {
         <ScrollView contentContainerStyle={styles.scroll}>
           <View style={styles.container}>
             <Image source={require('../assets/logo2.png')} style={styles.logo} resizeMode="contain" />
-
+  
             <View style={styles.card}>
               <Text style={styles.title}>เข้าสู่ระบบ</Text>
-
+  
               <View style={styles.inputWrapper}>
                 <Image source={require('../assets/user.png')} style={styles.iconLeft} />
                 <TextInput
@@ -81,7 +81,7 @@ const LoginScreen = () => {
                   autoCapitalize="none"
                 />
               </View>
-
+  
               <View style={styles.inputWrapper}>
                 <Image source={require('../assets/lock.png')} style={styles.iconLeftSmall} />
                 <TextInput
@@ -90,7 +90,7 @@ const LoginScreen = () => {
                   placeholderTextColor="#888"
                   value={password}
                   onChangeText={setPassword}
-                  secureTextEntry={!showPassword} // ✅ ซ่อนรหัส
+                  secureTextEntry={!showPassword}
                 />
                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                   <Image
@@ -99,36 +99,25 @@ const LoginScreen = () => {
                   />
                 </TouchableOpacity>
               </View>
-
+  
               <TouchableOpacity onPress={() => router.push('/forgotpassword')}>
                 <Text style={styles.forgot}>เปลี่ยนรหัสผ่าน</Text>
               </TouchableOpacity>
-
+  
               <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
                 <Text style={styles.loginText}>เข้าสู่ระบบ</Text>
               </TouchableOpacity>
-
+  
               <TouchableOpacity style={styles.signupButton} onPress={() => router.push('/register')}>
                 <Text style={styles.signupText}>สมัครสมาชิก</Text>
               </TouchableOpacity>
-
-              <View style={styles.dividerContainer}>
-                <View style={styles.line} />
-                <Text style={styles.orText}>ช่องทางอื่นๆ</Text>
-                <View style={styles.line} />
-              </View>
-
-              <View style={styles.socialContainer}>
-                <Image source={require('../assets/facebook.png')} style={styles.socialIcon} />
-                <Image source={require('../assets/google.png')} style={styles.socialIcon} />
-                <Image source={require('../assets/line.png')} style={styles.socialIcon} />
-              </View>
             </View>
           </View>
         </ScrollView>
       </ImageBackground>
     </View>
   );
+  
 };
 
 export default LoginScreen;
@@ -229,30 +218,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 18,
     fontWeight: 'bold',
-  },
-  dividerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 20,
-  },
-  line: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#000',
-  },
-  orText: {
-    marginHorizontal: 10,
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  socialContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-    marginBottom: 10,
-  },
-  socialIcon: {
-    width: 40,
-    height: 40,
   },
 });
