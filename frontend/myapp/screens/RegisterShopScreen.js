@@ -11,6 +11,7 @@ import { db } from '../config/firebase-config';
 import { useRouter } from 'expo-router';
 import * as ImageManipulator from 'expo-image-manipulator';
 import Header from '../components/header';
+import { getAuth } from 'firebase/auth';
 
 export default function RegisterShopScreen() {
   const router = useRouter();
@@ -89,43 +90,47 @@ export default function RegisterShopScreen() {
       return;
     }
 
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      Alert.alert("กรุณาเข้าสู่ระบบก่อนทำการสมัครร้านค้า");
+      return;
+    }
+
+    const uid = currentUser.uid;
+
     setUploading(true);
     try {
       const uploadToCloudinary = async (uri) => {
         const formData = new FormData();
         const filename = uri.split('/').pop();
         const fileType = filename.split('.').pop();
-      
+
         formData.append('file', {
           uri,
           name: filename,
           type: `image/${fileType}`,
         });
-        formData.append('upload_preset', 'shop123'); // เปลี่ยนให้ตรงกับของคุณ
-      
-        try {
-          const response = await axios.post(
-            'https://api.cloudinary.com/v1_1/dd0ro6iov/image/upload',
-            formData,
-            {
-              headers: {
-                'Content-Type': 'multipart/form-data',
-              },
-            }
-          );
-          return response.data.secure_url;
-        } catch (err) {
-          console.error('Cloudinary upload error:', err);
-          throw err;
-        }
+        formData.append('upload_preset', 'shop123');
+
+        const response = await axios.post(
+          'https://api.cloudinary.com/v1_1/dd0ro6iov/image/upload',
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          }
+        );
+        return response.data.secure_url;
       };
-      
 
       const profileImageUrl = await uploadToCloudinary(profileImageUri);
       const shopImageUrls = await Promise.all(shopImageUris.map(uri => uploadToCloudinary(uri)));
 
       await addDoc(collection(db, 'shops'), {
-        shopName, ownerName, address, district, amphoe, province, zipcode,
+        uid, shopName, ownerName, address, district, amphoe, province, zipcode,
         phone, category, detail, pinAddress,
         profileImageUrl, shopImageUrls,
         createdAt: new Date()
@@ -140,7 +145,6 @@ export default function RegisterShopScreen() {
       setUploading(false);
     }
   };
-
   const handleSubmit = () => {
     if (!shopName || !ownerName || !address || !pinAddress || !district || !amphoe || !province || !zipcode || !phone || !category || !detail) {
       alert('กรุณากรอกข้อมูลให้ครบ');
