@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, ScrollView, StyleSheet, Alert } from 'react-native';
+import {
+  View, Text, TextInput, TouchableOpacity, Image,
+  ScrollView, StyleSheet, Alert
+} from 'react-native';
 import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
@@ -24,7 +27,7 @@ export default function RegisterShopScreen() {
   const [category, setCategory] = useState('');
   const [detail, setDetail] = useState('');
   const [profileImageUri, setProfileImageUri] = useState(null);
-  const [shopImageUri, setShopImageUri] = useState(null);
+  const [shopImageUris, setShopImageUris] = useState([]);
   const [uploading, setUploading] = useState(false);
 
   const handleLocationPick = async () => {
@@ -60,21 +63,28 @@ export default function RegisterShopScreen() {
       quality: 1,
     });
 
-    if (!result.cancelled && result.assets?.[0]?.uri) {
+    if (!result.canceled && result.assets?.[0]?.uri) {
       const manipResult = await ImageManipulator.manipulateAsync(
         result.assets[0].uri,
         [{ resize: { width: 800 } }],
         { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
       );
-      if (type === 'profile') setProfileImageUri(manipResult.uri);
-      else if (type === 'shop') setShopImageUri(manipResult.uri);
+      if (type === 'profile') {
+        setProfileImageUri(manipResult.uri);
+      } else if (type === 'shop') {
+        setShopImageUris(prev => [...prev, manipResult.uri]);
+      }
     } else {
       alert('ไม่พบภาพที่เลือก');
     }
   };
 
+  const handleRemoveShopImage = (indexToRemove) => {
+    setShopImageUris(prev => prev.filter((_, index) => index !== indexToRemove));
+  };
+
   const handleUpload = async () => {
-    if (!profileImageUri || !shopImageUri) {
+    if (!profileImageUri || shopImageUris.length === 0) {
       alert("กรุณาเลือกรูปภาพทั้งสองอัน");
       return;
     }
@@ -85,19 +95,39 @@ export default function RegisterShopScreen() {
         const formData = new FormData();
         const filename = uri.split('/').pop();
         const fileType = filename.split('.').pop();
-        formData.append('file', { uri, name: filename, type: `image/${fileType}` });
-        formData.append('upload_preset', 'shop123');
-        const response = await axios.post('https://api.cloudinary.com/v1_1/dd0ro6iov/image/upload', formData);
-        return response.data.secure_url;
+      
+        formData.append('file', {
+          uri,
+          name: filename,
+          type: `image/${fileType}`,
+        });
+        formData.append('upload_preset', 'shop123'); // เปลี่ยนให้ตรงกับของคุณ
+      
+        try {
+          const response = await axios.post(
+            'https://api.cloudinary.com/v1_1/dd0ro6iov/image/upload',
+            formData,
+            {
+              headers: {
+                'Content-Type': 'multipart/form-data',
+              },
+            }
+          );
+          return response.data.secure_url;
+        } catch (err) {
+          console.error('Cloudinary upload error:', err);
+          throw err;
+        }
       };
+      
 
       const profileImageUrl = await uploadToCloudinary(profileImageUri);
-      const shopImageUrl = await uploadToCloudinary(shopImageUri);
+      const shopImageUrls = await Promise.all(shopImageUris.map(uri => uploadToCloudinary(uri)));
 
       await addDoc(collection(db, 'shops'), {
         shopName, ownerName, address, district, amphoe, province, zipcode,
         phone, category, detail, pinAddress,
-        profileImageUrl, shopImageUrl,
+        profileImageUrl, shopImageUrls,
         createdAt: new Date()
       });
 
@@ -127,7 +157,11 @@ export default function RegisterShopScreen() {
 
         <View style={styles.imagePickerContainer}>
           <TouchableOpacity style={styles.profileImageBtn} onPress={() => handleImagePick('profile')}>
-            <Image source={require('../assets/profile.png')} style={styles.profileImage} />
+            {profileImageUri ? (
+              <Image source={{ uri: profileImageUri }} style={styles.profileImage} />
+            ) : (
+              <Image source={require('../assets/profile.png')} style={styles.profileImage} />
+            )}
             <View style={styles.profileImageOverlay}>
               <Image source={require('../assets/plus.png')} style={styles.plusIcon} />
             </View>
@@ -152,15 +186,23 @@ export default function RegisterShopScreen() {
 
         <View style={styles.imageBoxContainer}>
           <TouchableOpacity style={styles.imageBox} onPress={() => handleImagePick('shop')}>
-            {shopImageUri ? (
-              <Image source={{ uri: shopImageUri }} style={styles.imageBoxPreview} />
-            ) : (
-              <>
-                <Image source={require('../assets/plus.png')} style={styles.imageBoxPlusIcon} />
-                <Text style={styles.imageBoxText}>อัปโหลดรูปภาพรายละเอียดร้าน</Text>
-              </>
-            )}
+            <Image source={require('../assets/plus.png')} style={styles.imageBoxPlusIcon} />
+            <Text style={styles.imageBoxText}>เพิ่มรูปภาพร้านเพิ่มเติม</Text>
           </TouchableOpacity>
+
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
+            {shopImageUris.map((uri, index) => (
+              <View key={index} style={styles.shopImageWrapper}>
+                <Image source={{ uri }} style={styles.shopImagePreview} />
+                <TouchableOpacity
+                  style={styles.removeButton}
+                  onPress={() => handleRemoveShopImage(index)}
+                >
+                  <Text style={styles.removeButtonText}>x</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+          </ScrollView>
         </View>
 
         <View style={styles.buttonRow}>
@@ -187,7 +229,10 @@ const styles = StyleSheet.create({
   imagePickerContainer: { alignItems: 'center', marginBottom: 20 },
   profileImageBtn: { justifyContent: 'center', alignItems: 'center' },
   profileImage: { width: 100, height: 100, borderRadius: 50 },
-  profileImageOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center' },
+  profileImageOverlay: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    justifyContent: 'center', alignItems: 'center'
+  },
   plusIcon: { width: 30, height: 30 },
   pinInputRow: {
     flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#222',
@@ -195,34 +240,35 @@ const styles = StyleSheet.create({
   },
   locationIcon: { width: 24, height: 24, marginRight: 10 },
   pinText: { color: '#333', fontSize: 14 },
-  buttonRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 16, columnGap: 40 },
-  cancelButton: { backgroundColor: 'white', padding: 16, borderRadius: 12, minWidth: 160, alignItems: 'center' },
-  confirmButton: { backgroundColor: '#c4df00', padding: 16, borderRadius: 12, minWidth: 160, alignItems: 'center' },
-  imageBoxContainer: { alignItems: 'center', marginVertical: 15 },
+  buttonRow: {
+    flexDirection: 'row', justifyContent: 'center',
+    alignItems: 'center', marginTop: 16, columnGap: 40
+  },
+  cancelButton: {
+    backgroundColor: 'white', padding: 16, borderRadius: 12,
+    minWidth: 160, alignItems: 'center'
+  },
+  confirmButton: {
+    backgroundColor: '#c4df00', padding: 16, borderRadius: 12,
+    minWidth: 160, alignItems: 'center'
+  },
+  imageBoxContainer: { marginVertical: 15 },
   imageBox: {
-    width: 220,
-    height: 140,
-    borderWidth: 2,
-    borderColor: '#ccc',
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f9f9f9',
-    overflow: 'hidden',
+    width: '100%', height: 100, borderWidth: 2, borderColor: '#ccc',
+    borderRadius: 10, justifyContent: 'center', alignItems: 'center',
+    backgroundColor: '#f9f9f9', overflow: 'hidden'
   },
-  imageBoxPreview: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
+  imageBoxPlusIcon: { width: 30, height: 30, tintColor: '#888', marginBottom: 5 },
+  imageBoxText: { fontSize: 13, color: '#666' },
+  shopImagePreview: {
+    width: 100, height: 100, borderRadius: 8,
+    borderWidth: 1, borderColor: '#ccc', marginRight: 8
   },
-  imageBoxPlusIcon: {
-    width: 30,
-    height: 30,
-    marginBottom: 8,
-    tintColor: '#888',
+  shopImageWrapper: { position: 'relative' },
+  removeButton: {
+    position: 'absolute', top: -5, right: -5,
+    backgroundColor: 'red', borderRadius: 10, padding: 2,
+    zIndex: 10
   },
-  imageBoxText: {
-    fontSize: 13,
-    color: '#666',
-  },
+  removeButtonText: { color: 'white', fontWeight: 'bold', fontSize: 12 },
 });

@@ -84,7 +84,7 @@ export default function HomeScreen() {
             <FeatureButton
               title="บริจาค"
               icon={require("../assets/fundraising.png")}
-              onPress={() => navigation.navigate("lookpost")}
+              onPress={() => navigation.navigate("donate")}
             />
           </View>
 
