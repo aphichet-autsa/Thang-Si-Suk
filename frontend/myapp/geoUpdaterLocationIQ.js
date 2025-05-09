@@ -37,8 +37,10 @@ const fetchCoordsFromLocationIQ = async (address) => {
         latitude: parseFloat(result.lat),
         longitude: parseFloat(result.lon),
       };
+    } else {
+      console.warn("ไม่พบข้อมูลพิกัดจาก LocationIQ สำหรับที่อยู่:", address);
+      return null;
     }
-    return null;
   } catch (error) {
     console.error("❌ Error fetching from LocationIQ:", error.message);
     return null;
