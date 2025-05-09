@@ -98,7 +98,7 @@ export default function PostScreen() {
         Alert.alert('กรุณาใส่คำบรรยายและเลือกรูปอย่างน้อย 1 รูป');
         return;
       }
-
+  
       const auth = getAuth();
       const currentUser = auth.currentUser;
       if (!currentUser) {
@@ -107,13 +107,13 @@ export default function PostScreen() {
       }
       
       const uid = currentUser.uid;
-
+  
       const userRef = doc(db, 'users', uid);
       const userSnap = await getDoc(userRef);
       const userData = userSnap.exists() ? userSnap.data() : {};
       const ownerName = userData.name || '';
       const profileImageUrl = userData.photouser || '';
-
+  
       const uploadedUrls = [];
       for (const uri of images) {
         const formData = new FormData();
@@ -125,13 +125,13 @@ export default function PostScreen() {
           type: `image/${fileType}`,
         });
         formData.append('upload_preset', 'postuser');
-
+  
         const response = await axios.post('https://api.cloudinary.com/v1_1/dd0ro6iov/image/upload', formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
         uploadedUrls.push(response.data.secure_url);
       }
-
+  
       await addDoc(collection(db, postType === 'donate' ? 'PostDonate' : 'PostSale'), {
         caption,
         imageUrls: uploadedUrls,
@@ -142,19 +142,26 @@ export default function PostScreen() {
         ownerName,
         profileImageUrl,
         createdAt: serverTimestamp(),
-      });      
-
+      });
+  
       Alert.alert('โพสต์สำเร็จ!');
       setCaption('');
       setImages([]);
       setAddress('');
       setCoords(null);
-      navigation.navigate('lookpost');
+  
+      // นำทางไปหน้าแตกต่างกันตามประเภทของโพสต์
+      if (postType === 'buy') {
+        navigation.navigate('lookpost');  // หากโพสต์ประเภท "ซื้อขาย" ไปที่หน้า lookpost
+      } else if (postType === 'donate') {
+        navigation.navigate('donate');  // หากโพสต์ประเภท "บริจาค" ไปที่หน้า donate
+      }
     } catch (error) {
       console.error('Post error:', error);
       Alert.alert('เกิดข้อผิดพลาดในการโพสต์');
     }
   };
+  
 
   const renderImageItem = ({ item, index }) => (
     <TouchableOpacity
