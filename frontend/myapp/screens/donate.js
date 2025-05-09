@@ -74,6 +74,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
-
-// เปลี่ยนจาก DonateScreen เป็น ConateScreen
-export default DonateScreen; //
+export default DonateScreen;

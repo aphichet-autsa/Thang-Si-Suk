@@ -1,84 +1,148 @@
-import React, { useState } from 'react';
-import { View, TouchableOpacity, Image, Text, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import {
+  View, Text, StyleSheet, Image, FlatList, TouchableOpacity, Linking, ScrollView,
+} from 'react-native';
+import MapView, { Marker } from 'react-native-maps';
+import * as Location from 'expo-location';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../config/firebase-config';
+import Header from '../components/header';
+import BottomNav from '../components/BottomNav';
 
-const NavItem = ({ icon, label, onPress, active }) => {
-  return (
-    <TouchableOpacity style={styles.navItem} onPress={onPress}>
-      <Image source={icon} style={[styles.navIcon, active && styles.navIconActive]} />
-      <Text style={styles.navLabel}>{label}</Text>
-    </TouchableOpacity>
-  );
-};
+export default function NearbyShopsScreen() {
+  const [shops, setShops] = useState([]);
+  const [location, setLocation] = useState(null);
 
-export default function BottomNav() {
-  const router = useRouter();
-  const [activeIndex, setActiveIndex] = useState(0);
+  useEffect(() => {
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === 'granted') {
+        const loc = await Location.getCurrentPositionAsync({});
+        setLocation(loc.coords);
+      }
 
-  const handleNavItemPress = (index, route) => {
-    setActiveIndex(index);
-    router.push(route);
+      const snapshot = await getDocs(collection(db, 'shops'));
+      const shopData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      })).filter(shop => shop.coords?.latitude && shop.coords?.longitude);
+
+      setShops(shopData);
+    })();
+  }, []);
+
+  const openMap = (lat, lng) => {
+    Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`);
   };
 
-  return (
-    <View style={styles.navBar}>
-      <NavItem icon={require('../assets/home-2.png')} label="หน้าแรก" active={activeIndex === 0} onPress={() => handleNavItemPress(0, '/home')} />
-      <NavItem icon={require('../assets/shop.png')} label="ร้านรับซื้อ" active={activeIndex === 1} onPress={() => handleNavItemPress(1, '/shop')} />
-      <TouchableOpacity style={styles.navItemCenter} onPress={() => handleNavItemPress(2, '/Post')}>
-        <Image source={require('../assets/plus.png')} style={styles.bottomIconCenter} />
+  const renderShop = ({ item }) => (
+    <View style={styles.shopCard}>
+      <Text style={styles.shopName}>{item.shopName}</Text>
+      <Text style={styles.shopCategory}>{item.category || 'หมวดหมู่ไม่ระบุ'}</Text>
+      <Text style={styles.shopAddress}>{item.address || '-'}</Text>
+      <Text style={styles.shopPhone}>📞 {item.phone || 'ไม่มีเบอร์'}</Text>
+
+      <TouchableOpacity
+        style={styles.directionsButton}
+        onPress={() => openMap(item.coords.latitude, item.coords.longitude)}
+      >
+        <Text style={styles.directionsText}>Directions</Text>
       </TouchableOpacity>
-      <NavItem icon={require('../assets/location.png')} label="ร้านใกล้ฉัน" active={activeIndex === 3} onPress={() => handleNavItemPress(3, '/location')} />
-      <NavItem icon={require('../assets/test-account.png')} label="ฉัน" active={activeIndex === 4} onPress={() => handleNavItemPress(4, '/ShopProfileScreen')} />
+    </View>
+  );
+
+  return (
+    <View style={styles.container}>
+      <Header />
+
+      {location && (
+        <MapView
+          style={styles.map}
+          initialRegion={{
+            latitude: location.latitude,
+            longitude: location.longitude,
+            latitudeDelta: 0.05,
+            longitudeDelta: 0.05,
+          }}
+        >
+          {shops.map((shop) => (
+            <Marker
+              key={shop.id}
+              coordinate={{
+                latitude: shop.coords.latitude,
+                longitude: shop.coords.longitude,
+              }}
+              title={shop.shopName}
+              description={shop.address}
+            />
+          ))}
+        </MapView>
+      )}
+
+      <View style={styles.resultsBox}>
+        <Text style={styles.resultsHeader}>Results</Text>
+        <FlatList
+          data={shops}
+          renderItem={renderShop}
+          keyExtractor={item => item.id}
+          contentContainerStyle={{ paddingBottom: 80 }}
+        />
+      </View>
+
+      <BottomNav />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  navBar: {
+  container: { flex: 1, backgroundColor: '#f4f4f4' },
+  map: { height: 250 },
+  resultsBox: {
     backgroundColor: '#fff',
-    flexDirection: 'row',
-    justifyContent: 'space-between', // ใช้ space-between เพื่อให้ระยะห่างระหว่างปุ่มเท่ากัน
-    alignItems: 'center',
+    paddingHorizontal: 15,
+    paddingTop: 10,
+    flex: 1,
+  },
+  resultsHeader: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  shopCard: {
+    borderBottomWidth: 1,
+    borderColor: '#eee',
     paddingVertical: 12,
-    width: '100%',
-    borderTopWidth: 1,
-    borderColor: '#ddd',
-    elevation: 8,
   },
-  navItem: { 
-    alignItems: 'center', 
-    flex: 1, 
-    justifyContent: 'center',
-    paddingHorizontal: 8, // เพิ่มระยะห่างระหว่างปุ่ม
+  shopName: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    color: '#333',
   },
-  navIcon: { 
-    width: 30, 
-    height: 30, 
-    tintColor: '#000' 
+  shopCategory: {
+    color: '#888',
+    fontSize: 13,
+    marginTop: 2,
   },
-  navIconActive: { 
-    tintColor: '#B7E305' 
+  shopAddress: {
+    fontSize: 14,
+    color: '#555',
+    marginTop: 2,
   },
-  navItemCenter: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: -16,
-    backgroundColor: '#fff',
-    borderRadius: 30,
-    width: 60,
-    height: 60,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 4,
+  shopPhone: {
+    fontSize: 13,
+    marginTop: 2,
+    color: '#007AFF',
   },
-  bottomIconCenter: { 
-    width: 30, 
-    height: 30 
+  directionsButton: {
+    alignSelf: 'flex-start',
+    marginTop: 5,
+    backgroundColor: '#E6F1FF',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
   },
-  navLabel: { 
-    fontSize: 11, 
-    marginTop: 3 
+  directionsText: {
+    color: '#007AFF',
+    fontWeight: 'bold',
   },
 });

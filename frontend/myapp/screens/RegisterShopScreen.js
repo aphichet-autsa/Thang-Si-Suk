@@ -29,6 +29,7 @@ export default function RegisterShopScreen() {
   const [profileImageUri, setProfileImageUri] = useState(null);
   const [shopImageUris, setShopImageUris] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [location, setLocation] = useState(null); // ✅ สำหรับเก็บพิกัดร้าน
 
   const handleLocationPick = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
@@ -38,8 +39,10 @@ export default function RegisterShopScreen() {
     }
 
     try {
-      const location = await Location.getCurrentPositionAsync({});
-      const geocode = await Location.reverseGeocodeAsync(location.coords);
+      const loc = await Location.getCurrentPositionAsync({});
+      setLocation(loc); // ✅ เก็บตำแหน่งพิกัด
+
+      const geocode = await Location.reverseGeocodeAsync(loc.coords);
       const place = geocode[0];
       const fullAddress = `${place.name || ''} ${place.street || ''} ${place.district || ''} ${place.city || ''} ${place.region || ''}`.trim();
       setPinAddress(fullAddress);
@@ -50,8 +53,8 @@ export default function RegisterShopScreen() {
   };
 
   const handleImagePick = async (type) => {
-    let permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permissionResult.granted) {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
       alert('คุณต้องให้สิทธิ์การเข้าถึงรูปภาพ');
       return;
     }
@@ -95,31 +98,25 @@ export default function RegisterShopScreen() {
         const formData = new FormData();
         const filename = uri.split('/').pop();
         const fileType = filename.split('.').pop();
-      
+
         formData.append('file', {
           uri,
           name: filename,
           type: `image/${fileType}`,
         });
-        formData.append('upload_preset', 'shop123'); // เปลี่ยนให้ตรงกับของคุณ
-      
-        try {
-          const response = await axios.post(
-            'https://api.cloudinary.com/v1_1/dd0ro6iov/image/upload',
-            formData,
-            {
-              headers: {
-                'Content-Type': 'multipart/form-data',
-              },
-            }
-          );
-          return response.data.secure_url;
-        } catch (err) {
-          console.error('Cloudinary upload error:', err);
-          throw err;
-        }
+        formData.append('upload_preset', 'shop123'); // ใช้ของคุณเอง
+
+        const response = await axios.post(
+          'https://api.cloudinary.com/v1_1/dd0ro6iov/image/upload',
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          }
+        );
+        return response.data.secure_url;
       };
-      
 
       const profileImageUrl = await uploadToCloudinary(profileImageUri);
       const shopImageUrls = await Promise.all(shopImageUris.map(uri => uploadToCloudinary(uri)));
@@ -127,6 +124,10 @@ export default function RegisterShopScreen() {
       await addDoc(collection(db, 'shops'), {
         shopName, ownerName, address, district, amphoe, province, zipcode,
         phone, category, detail, pinAddress,
+        coords: location?.coords ? {
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        } : null, // ✅ บันทึกพิกัด
         profileImageUrl, shopImageUrls,
         createdAt: new Date()
       });
@@ -144,6 +145,10 @@ export default function RegisterShopScreen() {
   const handleSubmit = () => {
     if (!shopName || !ownerName || !address || !pinAddress || !district || !amphoe || !province || !zipcode || !phone || !category || !detail) {
       alert('กรุณากรอกข้อมูลให้ครบ');
+      return;
+    }
+    if (!location) {
+      alert('กรุณาปักหมุดตำแหน่งร้านของคุณ');
       return;
     }
     handleUpload();

@@ -15,10 +15,10 @@ export default function Header() {
 
       {/* Location + Logout Icons */}
       <View style={styles.rightGroup}>
-        <TouchableOpacity onPress={() => router.push('/')} style={styles.iconContainer}>
+        <TouchableOpacity onPress={() => router.push('/NearShops')} style={styles.iconContainer}>
           <Image source={require('../assets/location.png')} style={styles.icon} />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push('/')} style={styles.iconContainer}>
+        <TouchableOpacity onPress={() => router.push('/login')} style={styles.iconContainer}>
           <Image source={require('../assets/logout.png')} style={styles.icon} />
         </TouchableOpacity>
       </View>
