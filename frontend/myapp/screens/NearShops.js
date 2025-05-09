@@ -13,7 +13,7 @@ export default function NearbyShopsScreen() {
   const [shops, setShops] = useState([]);
   const [location, setLocation] = useState(null);
 
-  useEffect(() => {
+  useEffect(() => {   //
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status === 'granted') {
