@@ -29,7 +29,7 @@ export default function RootLayout() {
       <Stack.Screen name="home" options={{ headerShown: false }} />
       <Stack.Screen name="lookpost" options={{ headerShown: false }} />
       <Stack.Screen name="donate" options={{ headerShown: false }} />
-      <Stack.Screen name="NearShops" options={{ headerShown: false }} />
+      <Stack.Screen name="nearshops" options={{ headerShown: false }} />
     </Stack>
   );
 }
