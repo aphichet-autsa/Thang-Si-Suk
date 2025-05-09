@@ -15,11 +15,12 @@ const LookPost = () => {
       const snapshot = await getDocs(collection(db, 'PostSale'));
       const data = snapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() }))
-        .sort((a, b) => b.createdAt?.seconds - a.createdAt?.seconds); // เรียงล่าสุดก่อน
+        .sort((a, b) => b.createdAt?.seconds - a.createdAt?.seconds);
       setPosts(data);
     };
     fetchPosts();
   }, []);
+
   const renderPost = ({ item }) => (
     <View style={styles.postCard}>
       <View style={styles.postHeader}>
@@ -33,9 +34,11 @@ const LookPost = () => {
         />
         <View>
           <Text style={styles.username}>{item.ownerName || 'ไม่ระบุชื่อ'}</Text>
-          <Text style={styles.date}>
-            {item.createdAt?.toDate ? item.createdAt.toDate().toLocaleDateString() : 'ไม่ทราบวันที่'}
-          </Text>
+          {item.createdAt?.toDate && (
+            <Text style={styles.date}>
+              {item.createdAt.toDate().toLocaleDateString()}
+            </Text>
+          )}
           <Text style={styles.location}>{item.address || 'ไม่ระบุตำแหน่ง'}</Text>
         </View>
       </View>
@@ -76,21 +79,19 @@ const LookPost = () => {
     <View style={styles.container}>
       <Header />
 
-      <ScrollView>
-        <View style={styles.featureContainer}>
-          <FeatureButton title="ร้านรับซื้อ" icon={require('../assets/bg-home.png')} onPress={() => router.push('/shop')} />
-          <FeatureButton title="โพสต์ซื้อขาย" icon={require('../assets/excellent.png')} onPress={() => router.push('/lookpost')} />
-          <FeatureButton title="บริจาค" icon={require('../assets/fundraising.png')} onPress={() => router.push('/donate')} />
-        </View>
-
-        <FlatList
-          data={posts}
-          renderItem={renderPost}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={{ paddingBottom: 100 }}
-        />
-      </ScrollView>
-
+      <FlatList
+        ListHeaderComponent={
+          <View style={styles.featureContainer}>
+            <FeatureButton title="ร้านรับซื้อ" icon={require('../assets/bg-home.png')} onPress={() => router.push('/shop')} />
+            <FeatureButton title="ซื้อขาย" icon={require('../assets/excellent.png')} onPress={() => router.push('/lookpost')} />
+            <FeatureButton title="บริจาค" icon={require('../assets/fundraising.png')} onPress={() => router.push('/donate')} />
+          </View>
+        }
+        data={posts}
+        renderItem={renderPost}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={{ paddingBottom: 100 }}
+      />
       <BottomNav />
     </View>
   );
@@ -112,7 +113,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 15,
     paddingVertical: 20,
-    marginTop: 0,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
@@ -156,9 +156,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   profileImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     marginRight: 10,
   },
   username: {
@@ -178,8 +178,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   postImage: {
-    width: 100,
-    height: 100,
+    width: 240,
+    height: 180,
     borderRadius: 8,
     marginRight: 8,
   },
