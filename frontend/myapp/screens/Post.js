@@ -10,7 +10,9 @@ import Header from '../components/header';
 import BottomNav from '../components/BottomNav';
 import { db, storage } from '../config/firebase-config';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { doc, getDoc } from 'firebase/firestore'; 
+import { getAuth } from 'firebase/auth';
+import axios from 'axios';
 
 export default function PostScreen() {
   const navigation = useNavigation();
@@ -68,8 +70,6 @@ export default function PostScreen() {
 
     try {
       const loc = await Location.getCurrentPositionAsync({});
-      if (!loc || !loc.coords) throw new Error('ไม่สามารถดึงตำแหน่งได้');
-
       const geocode = await Location.reverseGeocodeAsync(loc.coords);
       const place = geocode?.[0] || {};
       const fullAddress = `${place.name || ''} ${place.street || ''} ${place.district || ''} ${place.city || ''} ${place.region || ''}`.trim();
@@ -99,26 +99,50 @@ export default function PostScreen() {
         return;
       }
 
-      const uploadedUrls = [];
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        Alert.alert('กรุณาเข้าสู่ระบบก่อนโพสต์');
+        return;
+      }
+      
+      const uid = currentUser.uid;
 
+      const userRef = doc(db, 'users', uid);
+      const userSnap = await getDoc(userRef);
+      const userData = userSnap.exists() ? userSnap.data() : {};
+      const ownerName = userData.name || '';
+      const profileImageUrl = userData.photouser || '';
+
+      const uploadedUrls = [];
       for (const uri of images) {
-        const response = await fetch(uri);
-        const blob = await response.blob();
-        const imageName = `post_${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
-        const storageRef = ref(storage, `posts/${imageName}`);
-        await uploadBytes(storageRef, blob);
-        const downloadUrl = await getDownloadURL(storageRef);
-        uploadedUrls.push(downloadUrl);
+        const formData = new FormData();
+        const filename = uri.split('/').pop();
+        const fileType = filename.split('.').pop();
+        formData.append('file', {
+          uri,
+          name: filename,
+          type: `image/${fileType}`,
+        });
+        formData.append('upload_preset', 'postuser');
+
+        const response = await axios.post('https://api.cloudinary.com/v1_1/dd0ro6iov/image/upload', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        uploadedUrls.push(response.data.secure_url);
       }
 
-      await addDoc(collection(db, 'PostSale'), {
+      await addDoc(collection(db, postType === 'donate' ? 'PostDonate' : 'PostSale'), {
         caption,
         imageUrls: uploadedUrls,
         address,
         coords: coords || null,
         type: postType,
+        uid,
+        ownerName,
+        profileImageUrl,
         createdAt: serverTimestamp(),
-      });
+      });      
 
       Alert.alert('โพสต์สำเร็จ!');
       setCaption('');

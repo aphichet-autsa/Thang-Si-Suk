@@ -11,6 +11,7 @@ import { db } from '../config/firebase-config';
 import { useRouter } from 'expo-router';
 import * as ImageManipulator from 'expo-image-manipulator';
 import Header from '../components/header';
+import { getAuth } from 'firebase/auth';
 
 export default function RegisterShopScreen() {
   const router = useRouter();
@@ -92,6 +93,16 @@ export default function RegisterShopScreen() {
       return;
     }
 
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      Alert.alert("กรุณาเข้าสู่ระบบก่อนทำการสมัครร้านค้า");
+      return;
+    }
+
+    const uid = currentUser.uid;
+
     setUploading(true);
     try {
       const uploadToCloudinary = async (uri) => {
@@ -104,8 +115,6 @@ export default function RegisterShopScreen() {
           name: filename,
           type: `image/${fileType}`,
         });
-        formData.append('upload_preset', 'shop123'); // ใช้ของคุณเอง
-
         const response = await axios.post(
           'https://api.cloudinary.com/v1_1/dd0ro6iov/image/upload',
           formData,
@@ -122,7 +131,7 @@ export default function RegisterShopScreen() {
       const shopImageUrls = await Promise.all(shopImageUris.map(uri => uploadToCloudinary(uri)));
 
       await addDoc(collection(db, 'shops'), {
-        shopName, ownerName, address, district, amphoe, province, zipcode,
+        uid, shopName, ownerName, address, district, amphoe, province, zipcode,
         phone, category, detail, pinAddress,
         coords: location?.coords ? {
           latitude: location.coords.latitude,
@@ -141,7 +150,6 @@ export default function RegisterShopScreen() {
       setUploading(false);
     }
   };
-
   const handleSubmit = () => {
     if (!shopName || !ownerName || !address || !pinAddress || !district || !amphoe || !province || !zipcode || !phone || !category || !detail) {
       alert('กรุณากรอกข้อมูลให้ครบ');
