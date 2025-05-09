@@ -32,6 +32,28 @@ export default function RegisterShopScreen() {
   const [uploading, setUploading] = useState(false);
   const [location, setLocation] = useState(null); // ✅ สำหรับเก็บพิกัดร้าน
 
+  // ฟังก์ชันที่ใช้ LocationIQ API
+  const fetchCoordsFromLocationIQ = async (address) => {
+    const encoded = encodeURIComponent(address);
+    const url = `https://us1.locationiq.com/v1/search.php?key=pk.8480f03915285ddcb4dbcc718b32297d&q=${encoded}&format=json`;
+
+    try {
+      const response = await axios.get(url);
+      const result = response.data[0];
+      if (result) {
+        return {
+          latitude: parseFloat(result.lat),
+          longitude: parseFloat(result.lon),
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error("❌ Error fetching from LocationIQ:", error.message);
+      return null;
+    }
+  };
+
+  // ฟังก์ชันการเลือกตำแหน่ง
   const handleLocationPick = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
@@ -47,6 +69,14 @@ export default function RegisterShopScreen() {
       const place = geocode[0];
       const fullAddress = `${place.name || ''} ${place.street || ''} ${place.district || ''} ${place.city || ''} ${place.region || ''}`.trim();
       setPinAddress(fullAddress);
+
+      // แปลงตำแหน่งที่ตั้งที่ได้เป็นพิกัดจาก LocationIQ API
+      const coords = await fetchCoordsFromLocationIQ(fullAddress);
+      if (coords) {
+        setPinAddress(fullAddress); // ตั้งค่าพิกัดใหม่
+      } else {
+        console.warn("ไม่พบพิกัดจาก LocationIQ");
+      }
     } catch (error) {
       alert('เกิดข้อผิดพลาดในการดึงตำแหน่ง');
       console.error(error);
@@ -70,7 +100,7 @@ export default function RegisterShopScreen() {
     if (!result.canceled && result.assets?.[0]?.uri) {
       const manipResult = await ImageManipulator.manipulateAsync(
         result.assets[0].uri,
-        [{ resize: { width: 800 } }],
+        [{ resize: { width: 800 } }], 
         { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
       );
       if (type === 'profile') {
@@ -150,6 +180,7 @@ export default function RegisterShopScreen() {
       setUploading(false);
     }
   };
+
   const handleSubmit = () => {
     if (!shopName || !ownerName || !address || !pinAddress || !district || !amphoe || !province || !zipcode || !phone || !category || !detail) {
       alert('กรุณากรอกข้อมูลให้ครบ');
@@ -284,4 +315,4 @@ const styles = StyleSheet.create({
     zIndex: 10
   },
   removeButtonText: { color: 'white', fontWeight: 'bold', fontSize: 12 },
-});
+}); 
