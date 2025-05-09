@@ -1,17 +1,17 @@
-import React, { useState } from 'react';
-import {
-  View, Text, TextInput, TouchableOpacity, Image,
-  ScrollView, StyleSheet, Alert
-} from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, Image, ScrollView, StyleSheet, Alert } from 'react-native';
 import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
-import { addDoc, collection } from 'firebase/firestore';
+import { addDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../config/firebase-config';
 import { useRouter } from 'expo-router';
 import * as ImageManipulator from 'expo-image-manipulator';
 import Header from '../components/header';
 import { getAuth } from 'firebase/auth';
+
+const CLOUD_NAME = 'dd0ro6iov';
+const UPLOAD_PRESET = 'imaguser';
 
 export default function RegisterShopScreen() {
   const router = useRouter();
@@ -30,6 +30,27 @@ export default function RegisterShopScreen() {
   const [profileImageUri, setProfileImageUri] = useState(null);
   const [shopImageUris, setShopImageUris] = useState([]);
   const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    const checkIfShopExists = async () => {
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        const uid = currentUser.uid;
+
+        // Query to check if the user already has a shop
+        const q = query(collection(db, 'shops'), where('uid', '==', uid));
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+          Alert.alert('คุณได้สมัครร้านค้าไปแล้ว', 'คุณไม่สามารถสมัครร้านค้าใหม่ได้');
+          router.push('/shop'); // ไปหน้าร้านค้าที่มีอยู่
+        }
+      }
+    };
+
+    checkIfShopExists();
+  }, []);
 
   const handleLocationPick = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
@@ -145,6 +166,7 @@ export default function RegisterShopScreen() {
       setUploading(false);
     }
   };
+
   const handleSubmit = () => {
     if (!shopName || !ownerName || !address || !pinAddress || !district || !amphoe || !province || !zipcode || !phone || !category || !detail) {
       alert('กรุณากรอกข้อมูลให้ครบ');
@@ -275,4 +297,7 @@ const styles = StyleSheet.create({
     zIndex: 10
   },
   removeButtonText: { color: 'white', fontWeight: 'bold', fontSize: 12 },
-});
+  removeButtonText: {
+    color: 'white', fontWeight: 'bold', fontSize: 12
+  },
+}); 

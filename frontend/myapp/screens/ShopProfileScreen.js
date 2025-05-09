@@ -128,11 +128,12 @@ const ShopProfileScreen = () => {
           <SocialLink title={user?.ig || 'Instagram'} link={`https://www.instagram.com/${user?.ig || ''}`} icon={require('../assets/instagram.png')} />
           <SocialLink title={user?.phoneNumber || 'โทรเลย'} link={`tel:${user?.phoneNumber || ''}`} icon={require('../assets/call.png')} />
         </View>
-
+        <View style={styles.sectionRow}>
         <View style={styles.sectionRow}>
           <Image source={require('../assets/bg-home.png')} style={styles.sectionImage} />
           <Text style={styles.sectionTitle}>ร้านค้าของฉัน</Text>
         </View>
+      </View>
 
         <FlatList
           data={myPosts}

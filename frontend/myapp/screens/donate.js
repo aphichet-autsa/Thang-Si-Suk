@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
   location: { fontSize: 12, color: '#666' },
   description: { fontSize: 14, marginBottom: 10 },
   postImage: {
-    width: 240,
+    width: 260,
     height: 180,
     borderRadius: 8,
     marginRight: 8,
