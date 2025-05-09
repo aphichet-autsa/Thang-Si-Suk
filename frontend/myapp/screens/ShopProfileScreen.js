@@ -1,10 +1,12 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Linking } from 'react-native';
-import { useRouter } from 'expo-router'; // ใช้ useRouter จาก expo-router
-import Header from '../components/header'; // นำเข้าคอมโพเนนต์ HeaderOnly
-import BottomNav from '../components/BottomNav'; // นำเข้าคอมโพเนนต์ BottomNavOnly
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Linking, FlatList, Alert } from 'react-native';
+import { useRouter } from 'expo-router';
+import { db } from '../config/firebase-config';
+import { collection, getDocs, query, where, deleteDoc, doc } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+import Header from '../components/header';
+import BottomNav from '../components/BottomNav';
 
-// Social Link Component
 const SocialLink = ({ title, link, icon }) => (
   <View style={styles.socialRow}>
     <TouchableOpacity onPress={() => Linking.openURL(link)}>
@@ -14,45 +16,98 @@ const SocialLink = ({ title, link, icon }) => (
   </View>
 );
 
-// Post Component
-const Post = () => (
+const PostItem = ({ post, handleDeletePost }) => (
   <View style={styles.postContainer}>
     <View style={styles.postHeader}>
-      <Image source={require('../assets/profile.png')} style={styles.postAvatar} />
+      <Image source={post.profileImageUrl ? { uri: post.profileImageUrl } : require('../assets/profile.png')} style={styles.postAvatar} />
       <View>
-        <Text style={styles.postName}>นายสมปอง หมายปอง</Text>
-        <Text style={styles.postLocation}>ขาย🔘 มทส</Text>
+        <Text style={styles.postName}>{post.ownerName || 'ไม่ระบุชื่อ'}</Text>
+        <Text style={styles.postLocation}>{post.type === 'buy' ? 'โพสต์ขาย' : 'โพสต์บริจาค'} {post.address || ''}</Text>
       </View>
     </View>
-    <Text style={styles.postText}>
-      บริการรับของเก่าาาาาาาาาาาาาาาาาาาาาาาาาาาาาาาาาาาาาาาาาาาาาาาาาาาาาาาาาาา
-    </Text>
-    <Image source={require('../assets/shop_photo1.jpg')} style={styles.postImage} resizeMode="cover" />
-    <Text style={styles.contactText}>📞 ติดต่อ</Text>
+    <Text style={styles.postText}>{post.caption}</Text>
+
+    {/* ใช้ FlatList ในแนวนอนเพื่อแสดงหลายรูปภาพ */}
+    {post.imageUrls && post.imageUrls.length > 0 && (
+      <FlatList
+        data={post.imageUrls}
+        renderItem={({ item }) => (
+          <Image source={{ uri: item }} style={styles.postImage} resizeMode="cover" />
+        )}
+        keyExtractor={(item, index) => index.toString()}
+        horizontal={true}  // ทำให้เลื่อนข้าง ๆ
+        showsHorizontalScrollIndicator={false}  // ปิดการแสดง scroll indicator
+      />
+    )}
+
+    <Text style={styles.contactText}>ติดต่อ</Text>
+
+    {/* เปลี่ยนเป็นข้อความแทนปุ่ม */}
+    <Text style={styles.deleteText} onPress={() => handleDeletePost(post)}>ลบโพสต์</Text>
   </View>
 );
 
 const ShopProfileScreen = () => {
   const navigation = useRouter();
+  const [user, setUser] = useState(null);
+  const [myPosts, setMyPosts] = useState([]);
 
-  // ฟังก์ชันสำหรับการนำทางไปหน้า MyShopScreen
+  useEffect(() => {
+    const fetchUserAndPosts = async () => {
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+
+      const uid = currentUser.uid;
+
+      const userQuery = query(collection(db, 'users'), where('uid', '==', uid));
+      const userSnap = await getDocs(userQuery);
+      if (!userSnap.empty) {
+        setUser(userSnap.docs[0].data());
+      }
+
+      const posts = [];
+      const collections = ['PostSale', 'PostDonate'];
+      for (const col of collections) {
+        const q = query(collection(db, col), where('uid', '==', uid));
+        const snap = await getDocs(q);
+        snap.forEach(doc => posts.push(doc.data()));
+      }
+      setMyPosts(posts);
+    };
+
+    fetchUserAndPosts();
+  }, []);
+
   const goToMyShopScreen = () => {
-    navigation.navigate('MyShopScreen');  // นำทางไปยังหน้า MyShopScreen
+    navigation.navigate('MyShopScreen');
   };
 
-  // ฟังก์ชันย้อนกลับ
   const goBack = () => {
     navigation.replace('/home');
   };
 
+  const handleDeletePost = async (post) => {
+    try {
+      const colName = post.type === 'buy' ? 'PostSale' : 'PostDonate';
+      const q = query(collection(db, colName), where('uid', '==', post.uid), where('caption', '==', post.caption));
+      const snap = await getDocs(q);
+      snap.forEach(async (docItem) => {
+        await deleteDoc(doc(db, colName, docItem.id));
+      });
+      setMyPosts(myPosts.filter(p => p.caption !== post.caption)); // อัปเดตหน้าจอ
+      Alert.alert('ลบแล้ว', 'โพสต์ถูกลบเรียบร้อย');
+    } catch (err) {
+      Alert.alert('ผิดพลาด', 'ไม่สามารถลบโพสต์ได้');
+    }
+  };
+
   return (
     <View style={styles.container}>
-      {/* ปุ่มย้อนกลับที่มุมซ้ายบน */}
       <TouchableOpacity style={styles.backButton} onPress={goBack}>
         <Image source={require('../assets/back.png')} style={styles.backIcon} />
       </TouchableOpacity>
 
-      {/* ปุ่มแก้ไขที่มุมขวา */}
       <TouchableOpacity style={styles.editButton} onPress={goToMyShopScreen}>
         <Image source={require('../assets/edit.png')} style={styles.editIcon} />
       </TouchableOpacity>
@@ -60,31 +115,37 @@ const ShopProfileScreen = () => {
       <Header />
 
       <ScrollView contentContainerStyle={styles.content}>
-        {/* ข้อมูลโปรไฟล์ */}
-        <View style={styles.profileContainer}>
-          <Image source={require('../assets/profile.png')} style={styles.profile} />
-          <Text style={styles.name}>นายสมปอง หมายปอง</Text>
-        </View>
+        {user && (
+          <View style={styles.profileContainer}>
+            <Image source={user.profileImageUrl ? { uri: user.profileImageUrl } : require('../assets/profile.png')} style={styles.profile} />
+            <Text style={styles.name}>{user.name}</Text>
+          </View>
+        )}
 
-        {/* ข้อมูล Social */}
         <View style={styles.socialContainer}>
-          <SocialLink title="Facebook" link="https://www.facebook.com/" icon={require('../assets/facebook.png')} />
-          <SocialLink title="Line" link="https://line.me/" icon={require('../assets/line.png')} />
-          <SocialLink title="Instagram" link="https://www.instagram.com/" icon={require('../assets/instagram.png')} />
-          <SocialLink title="โทรเลย" link="tel:+1234567890" icon={require('../assets/call.png')} />
+          <SocialLink title={user?.facebook || 'Facebook'} link={user?.facebooklink || 'https://www.facebook.com/'} icon={require('../assets/facebook.png')} />
+          <SocialLink title={user?.idline || 'Line'} link={`https://line.me/R/ti/p/~${user?.idline || ''}`} icon={require('../assets/line.png')} />
+          <SocialLink title={user?.ig || 'Instagram'} link={`https://www.instagram.com/${user?.ig || ''}`} icon={require('../assets/instagram.png')} />
+          <SocialLink title={user?.phoneNumber || 'โทรเลย'} link={`tel:${user?.phoneNumber || ''}`} icon={require('../assets/call.png')} />
         </View>
-
-        {/* ร้านค้าของฉัน */}
+        <View style={styles.sectionRow}>
         <View style={styles.sectionRow}>
           <Image source={require('../assets/bg-home.png')} style={styles.sectionImage} />
           <Text style={styles.sectionTitle}>ร้านค้าของฉัน</Text>
         </View>
+      </View>
 
-        {/* Post */}
-        <Post />
+        <FlatList
+          data={myPosts}
+          renderItem={({ item }) => (
+            <PostItem post={item} handleDeletePost={handleDeletePost} />
+          )}
+          keyExtractor={(item, index) => index.toString()}
+          scrollEnabled={false}
+        />
       </ScrollView>
 
-      <BottomNav />  {/* เรียกใช้ BottomNav Component */}
+      <BottomNav />
     </View>
   );
 };
@@ -108,12 +169,18 @@ const styles = StyleSheet.create({
   postName: { fontWeight: 'bold' },
   postLocation: { fontSize: 12, color: '#777' },
   postText: { marginBottom: 10, fontSize: 14, color: '#333' },
-  postImage: { width: '100%', height: 200, borderRadius: 10, marginBottom: 10 },
+  postImage: { width: 260, height: 190, borderRadius: 10, marginRight: 10 }, // เพิ่ม marginRight เพื่อให้สามารถเลื่อนได้
   contactText: { alignSelf: 'flex-end', color: '#007AFF', fontWeight: 'bold' },
   backButton: { position: 'absolute', top: 70, left: 10, zIndex: 1, padding: 10, backgroundColor: '#fff', borderRadius: 50 },
   backIcon: { width: 30, height: 30, resizeMode: 'contain' },
   editButton: { position: 'absolute', top: 70, right: 20, zIndex: 1, padding: 10, backgroundColor: '#fff', borderRadius: 50 },
   editIcon: { width: 30, height: 30, resizeMode: 'contain' },
+  deleteText: {
+    color: '#FF0000',
+    fontWeight: 'bold',
+    marginTop: 10,
+    textAlign: 'center',
+  },
 });
 
 export default ShopProfileScreen;
