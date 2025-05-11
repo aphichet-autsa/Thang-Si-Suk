@@ -30,7 +30,6 @@ export default function RootLayout() {
       <Stack.Screen name="lookpost" options={{ headerShown: false }} />
       <Stack.Screen name="donate" options={{ headerShown: false }} />
       <Stack.Screen name="NoShop" options={{ headerShown: false }} />
-      <Stack.Screen name="link" options={{ headerShown: false }} />
 
     </Stack>
   );

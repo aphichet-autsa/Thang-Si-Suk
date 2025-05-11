@@ -15,24 +15,27 @@ export default function ShopListPage() {
 
   const router = useRouter();
 
-  useEffect(() => { fetchShops(); }, []);
+  useEffect(() => {
+    fetchShops();
+  }, []);
 
   const fetchShops = async () => {
     try {
       const querySnapshot = await getDocs(collection(db, 'shops'));
-      const shopList = querySnapshot.docs
-        .map(doc => {
-          const data = doc.data();
-          const createdAt = data.createdAt instanceof Timestamp
-            ? data.createdAt.toDate().toLocaleString()
-            : '';
-          return {
-            id: doc.id,
-            ...data,
-            createdAt,
-          };
-        })
-        .filter(shop => !!shop.shopName); // ✅ กรองร้านที่ไม่มี shopName
+      const shopList = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+
+        const createdAt = data.createdAt instanceof Timestamp
+          ? data.createdAt.toDate().toLocaleString()
+          : '';
+
+        return {
+          id: doc.id,
+          shopName: data.shopName || '', // ป้องกัน undefined
+          ...data,
+          createdAt,
+        };
+      });
       setState(prev => ({ ...prev, shops: shopList }));
     } catch (error) {
       console.error("Error fetching shops:", error);
@@ -45,7 +48,7 @@ export default function ShopListPage() {
   };
 
   const filteredShops = state.shops.filter(shop =>
-    (shop.shopName || "").toLowerCase().includes(state.searchTerm.toLowerCase())
+    shop.shopName?.toLowerCase().includes(state.searchTerm.toLowerCase())
   );
 
   return (

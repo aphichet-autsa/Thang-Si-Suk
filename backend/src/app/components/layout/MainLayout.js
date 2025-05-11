@@ -88,7 +88,7 @@ export const MainLayout = ({ children, activeMenu }) => {
             <MenuButton active={activeMenu === 'shop'} onClick={() => router.push("/shop")}>
               ร้านค้าในระบบ
             </MenuButton>
-            <MenuButton active={activeMenu === 'posts'}>
+            <MenuButton active={activeMenu === 'posts'} onClick={() => router.push("/post")}>
               จัดการโพส
             </MenuButton>
             <MenuButton active={activeMenu === 'users'} onClick={() => router.push("/userlist")}>
