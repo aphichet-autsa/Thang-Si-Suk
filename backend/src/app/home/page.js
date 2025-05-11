@@ -55,77 +55,58 @@ export default function HomePage() {
     <MainLayout activeMenu="home">
       <h1>ข้อมูลความรู้ในระบบ</h1>
 
-      {/* Banner Image Upload */}
-      <section style={sectionStyle}>
-        <label style={labelStyle}>รูปภาพแถวบน <b>(Banner)</b></label>
-        <div style={uploadBox}>
+      {/* ================= Banner Section ================= */}
+      <h2 style={{ marginTop: 30 }}>📌 ภาพแถวบน (Banner)</h2>
+      <div style={imageContainer}>
+        {/* ปุ่มเพิ่มรูป Banner */}
+        <div style={imageBox}>
           <label style={iconButton}>
             ➕
             <input type="file" hidden onChange={(e) => handleUpload(e, "top")} />
           </label>
         </div>
-      </section>
 
-      {/* Infographic Image Upload */}
-      <section style={sectionStyle}>
-        <label style={labelStyle}>รูปภาพแถวล่าง <b>(Infographic)</b></label>
-        <div style={uploadBox}>
+        {/* แสดงรูป Banner */}
+        {knowledges
+          .filter(item => item.position === 'top')
+          .map(item => (
+            <div key={item.id} style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <div style={imageBox}>
+                <img src={item.imageUrl} alt="Uploaded" style={{ width: "100%", height: "auto", borderRadius: "10px" }} />
+                <button style={closeButton} onClick={() => handleDelete(item.id)}>❌</button>
+              </div>
+            </div>
+          ))}
+      </div>
+
+      {/* ================= Infographic Section ================= */}
+      <h2 style={{ marginTop: 30 }}>📌 ภาพแถวล่าง (Infographic)</h2>
+      <div style={imageContainer}>
+        {/* ปุ่มเพิ่มรูป Infographic */}
+        <div style={imageBox}>
           <label style={iconButton}>
             ➕
             <input type="file" hidden onChange={(e) => handleUpload(e, "bottom")} />
           </label>
         </div>
-      </section>
 
-      {/* Display Uploaded Images */}
-      <div style={imageContainer}>
-        {knowledges.map((item) => (
-          <div key={item.id} style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "20px" }}>
-            <div style={imageBox}>
-              <img src={item.imageUrl} alt="Uploaded Image" style={{ width: "100%", height: "auto", borderRadius: "10px" }} />
-              <button style={closeButton} onClick={() => handleDelete(item.id)}>❌</button>
+        {/* แสดงรูป Infographic */}
+        {knowledges
+          .filter(item => item.position === 'bottom')
+          .map(item => (
+            <div key={item.id} style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <div style={imageBox}>
+                <img src={item.imageUrl} alt="Uploaded" style={{ width: "100%", height: "auto", borderRadius: "10px" }} />
+                <button style={closeButton} onClick={() => handleDelete(item.id)}>❌</button>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
       </div>
     </MainLayout>
   );
 }
 
-// สไตล์ต่างๆ ที่ใช้เฉพาะในหน้านี้
-const sectionStyle = {
-  marginBottom: 30,
-};
-
-const labelStyle = {
-  fontWeight: "bold",
-  marginBottom: 10,
-  display: "block",
-  fontSize: 16,
-};
-
-const uploadBox = {
-  width: 200,
-  height: 100,
-  backgroundColor: "#fff",
-  borderRadius: 12,
-  boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-};
-
-const iconButton = {
-  width: 50,
-  height: 50,
-  borderRadius: "50%",
-  backgroundColor: "#e0e0e0",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  fontSize: 24,
-  cursor: "pointer",
-};
+// ================= STYLE =================
 
 const imageContainer = {
   display: "flex",
@@ -133,6 +114,7 @@ const imageContainer = {
   flexWrap: "wrap",
   gap: "20px",
   justifyContent: "flex-start",
+  marginBottom: "40px",
 };
 
 const imageBox = {
@@ -147,6 +129,18 @@ const imageBox = {
   padding: "10px",
   position: "relative",
   overflow: "hidden",
+};
+
+const iconButton = {
+  width: 50,
+  height: 50,
+  borderRadius: "50%",
+  backgroundColor: "#e0e0e0",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: 24,
+  cursor: "pointer",
 };
 
 const closeButton = {

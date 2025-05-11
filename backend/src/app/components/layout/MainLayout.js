@@ -9,7 +9,7 @@ import Image from "next/image";
 export const MainLayout = ({ children, activeMenu }) => {
   const router = useRouter();
   const [userName, setUserName] = useState("");
-  const [profileImage, setProfileImage] = useState("/default.png");
+  const [profileImage, setProfileImage] = useState("https://cdn-icons-png.flaticon.com/512/149/149071.png");
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -20,7 +20,9 @@ export const MainLayout = ({ children, activeMenu }) => {
           const userDoc = await getDoc(doc(db, "users", user.uid));
           if (userDoc.exists()) {
             const data = userDoc.data();
-            setProfileImage(data.profileImageUrl || "/default.png");
+            if (data.profileImageUrl) {
+              setProfileImage(data.profileImageUrl);
+            }
           }
         } catch (err) {
           console.error("โหลดโปรไฟล์ล้มเหลว:", err);
@@ -74,12 +76,7 @@ export const MainLayout = ({ children, activeMenu }) => {
               justifyContent: "center",
               marginRight: "10px"
             }}>
-              <Image
-                src={profileImage}
-                alt="Profile"
-                width={50}
-                height={50}
-              />
+              <Image src={profileImage} alt="Profile" width={50} height={50} />
             </div>
             <span style={{ fontWeight: "bold", fontSize: "16px" }}>{userName}</span>
           </div>
