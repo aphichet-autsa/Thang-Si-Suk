@@ -9,11 +9,11 @@ export default function ShopCard({ shop, fetchShops }) {
   const [formData, setFormData] = useState({ ...shop });
 
   const handleDelete = async () => {
-    if (!window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบร้านค้านี้?")) return;
+    if (!window.confirm("คุณแน่ใจว่าต้องการลบร้านค้านี้?")) return;
     try {
       await deleteDoc(doc(db, 'shops', shop.id));
-      alert("ลบร้านค้าสำเร็จแล้ว");
-      fetchShops(); // เรียกใช้ fetchShops หลังจากลบร้านค้า
+      alert("ลบร้านค้าเรียบร้อย");
+      fetchShops();
     } catch (err) {
       alert("เกิดข้อผิดพลาดในการลบ");
     }
@@ -25,19 +25,56 @@ export default function ShopCard({ shop, fetchShops }) {
         Object.entries(formData).filter(([_, v]) => v !== undefined && v !== null)
       );
       await updateDoc(doc(db, 'shops', shop.id), cleanFormData);
-      alert("อัปเดตร้านค้าแล้ว");
+      alert("อัปเดตร้านค้าเรียบร้อย");
       setShowModal(false);
-      fetchShops(); // เรียกใช้ fetchShops หลังจากอัปเดตร้านค้า
+      fetchShops();
     } catch (err) {
-      console.error("Update Error:", err);
       alert("อัปเดตล้มเหลว");
     }
   };
 
   return (
     <>
-      {/* Card */}
       <div style={cardStyle}>
+        {/* ✅ รูปภาพร้านหลัก */}
+        <img
+          src={shop.profileImageUrl || "https://cdn-icons-png.flaticon.com/512/149/149071.png"}
+          alt="รูปภาพร้าน"
+          style={{
+            width: '100%',
+            height: '180px',
+            objectFit: 'cover',
+            borderRadius: '10px',
+            marginBottom: '10px',
+          }}
+        />
+
+        {/* ✅ แสดงภาพสินค้าทั้งหมด */}
+        {Array.isArray(shop.shopImageUrls) && shop.shopImageUrls.length > 0 && (
+          <div style={{
+            display: 'flex',
+            gap: '10px',
+            overflowX: 'auto',
+            marginBottom: '10px'
+          }}>
+            {shop.shopImageUrls.map((url, idx) => (
+              <img
+                key={idx}
+                src={url}
+                alt={`รูปสินค้าร้าน ${shop.shopName}`}
+                style={{
+                  width: '90px',
+                  height: '90px',
+                  objectFit: 'cover',
+                  borderRadius: '8px',
+                  flexShrink: 0
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* ✅ ข้อมูลร้าน */}
         <p><strong>ชื่อร้าน:</strong> {shop.shopName}</p>
         <p><strong>เจ้าของ:</strong> {shop.ownerName}</p>
         <p><strong>ที่อยู่:</strong> {shop.address}</p>
@@ -49,13 +86,14 @@ export default function ShopCard({ shop, fetchShops }) {
         <p><strong>PIN ที่อยู่:</strong> {shop.pinAddress}</p>
         <p><strong>รายละเอียด:</strong> {shop.detail}</p>
         <p><strong>วันที่สร้าง:</strong> {shop.createdAt}</p>
-        <div style={{ display: 'flex', gap: '12px', marginTop: '15px' }}>
+
+        <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
           <button style={btnStyle('#4CAF50')} onClick={() => setShowModal(true)}>แก้ไข</button>
           <button style={btnStyle('#f44336')} onClick={handleDelete}>ลบ</button>
         </div>
       </div>
 
-      {/* Modal */}
+      {/* ✅ Modal แก้ไข */}
       {showModal && (
         <div style={modalOverlay}>
           <div style={modalBox}>
@@ -82,6 +120,7 @@ export default function ShopCard({ shop, fetchShops }) {
   );
 }
 
+// 🔧 Style และ Label
 const labelMap = {
   shopName: 'ชื่อร้าน',
   ownerName: 'เจ้าของ',
@@ -96,10 +135,11 @@ const labelMap = {
 };
 
 const cardStyle = {
-  backgroundColor: "#f8f9fa",
+  backgroundColor: "#fff",
   padding: "20px",
   borderRadius: "12px",
-  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)"
+  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
+  width: "300px"
 };
 
 const inputStyle = {
