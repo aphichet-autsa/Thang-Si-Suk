@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-  View, Text, Image, StyleSheet, TouchableOpacity, FlatList, Linking
-} from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, FlatList, Linking } from 'react-native';
 import Header from '../components/header';
 import BottomNav from '../components/BottomNav';
 import { useRouter } from 'expo-router';
@@ -65,6 +63,13 @@ const DonateScreen = () => {
           <Text style={styles.routeButtonText}>ดูเส้นทาง</Text>
         </TouchableOpacity>
       )}
+
+      <TouchableOpacity
+        style={styles.contactButton}
+        onPress={() => router.push({ pathname: '/link', query: { uid: item.uid } })}  // ส่ง uid ไปยัง LinkScreen
+      >
+        <Text style={styles.contactText}>ติดต่อ</Text>
+      </TouchableOpacity>
     </View>
   );
 
@@ -164,6 +169,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   routeButtonText: { color: '#fff', fontWeight: 'bold' },
+  contactButton: {
+    marginTop: 10,
+    backgroundColor: '#ededed',
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  contactText: {
+    fontWeight: 'bold',
+    color: '#333',
+  },
 });
 
 export default DonateScreen;
