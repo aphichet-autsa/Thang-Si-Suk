@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bar, Line, Pie } from 'react-chartjs-2';
+import { Bar, Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -7,7 +7,6 @@ import {
   BarElement,
   PointElement,
   LineElement,
-  ArcElement,
   Title,
   Tooltip,
   Legend,
@@ -20,20 +19,24 @@ ChartJS.register(
   BarElement,
   PointElement,
   LineElement,
-  ArcElement,
   Title,
   Tooltip,
   Legend
 );
 
-const ChartComponent = ({ data }) => {
-  // ข้อมูลตัวอย่างตามรูปภาพ
+const ChartComponent = ({ userStats, monthlyData, registrationData }) => {
+  // ข้อมูลผู้ใช้งานจาก props
   const userData = {
-    labels: ['จำนวนผู้ใช้งาน', 'ร้านค้าในระบบ', 'โพสต์ขาย', 'บริจาค'],
+    labels: ['ผู้ใช้งาน', 'ร้านค้า', 'โพสต์ขาย', 'โพสต์บริจาค'],
     datasets: [
       {
         label: 'จำนวน',
-        data: [99, 49, 69, 59],
+        data: [
+          userStats.users, 
+          userStats.shops, 
+          userStats.posts, 
+          userStats.donations
+        ],
         backgroundColor: [
           'rgba(54, 162, 235, 0.6)',
           'rgba(255, 99, 132, 0.6)',
@@ -51,44 +54,6 @@ const ChartComponent = ({ data }) => {
     ],
   };
 
-  const monthlyData = {
-    labels: ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.'],
-    datasets: [
-      {
-        label: 'อำเภอทองเทียน',
-        data: [50, 40, 30, 20, 10],
-        borderColor: 'rgba(255, 159, 64, 1)',
-        backgroundColor: 'rgba(255, 159, 64, 0.2)',
-        tension: 0.1,
-      },
-      {
-        label: 'พิเศษ (คน)',
-        data: [50, 40, 30, 20, 10],
-        borderColor: 'rgba(54, 162, 235, 1)',
-        backgroundColor: 'rgba(54, 162, 235, 0.2)',
-        tension: 0.1,
-      },
-    ],
-  };
-
-  const registrationData = {
-    labels: ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.'],
-    datasets: [
-      {
-        label: 'จำนวนการโพสต์คนและบริเวณ',
-        data: [50, 40, 30, 20, 10],
-        borderColor: 'rgba(75, 192, 192, 1)',
-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-      },
-      {
-        label: 'จำนวนการสมัครร้านค้า',
-        data: [50, 40, 30, 20, 10],
-        borderColor: 'rgba(153, 102, 255, 1)',
-        backgroundColor: 'rgba(153, 102, 255, 0.2)',
-      },
-    ],
-  };
-
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
       {/* แถวแรก */}
@@ -98,7 +63,7 @@ const ChartComponent = ({ data }) => {
         borderRadius: '8px',
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
       }}>
-        <h3 style={{ marginBottom: '20px' }}>จำนวนผู้ใช้งาน</h3>
+        <h3 style={{ marginBottom: '20px' }}>สถิติทั้งหมด</h3>
         <div style={{ height: '300px' }}>
           <Bar 
             data={userData}
@@ -107,9 +72,26 @@ const ChartComponent = ({ data }) => {
               maintainAspectRatio: false,
               plugins: {
                 legend: {
-                  position: 'top',
+                  display: false,
                 },
+                tooltip: {
+                  callbacks: {
+                    label: function(context) {
+                      return `${context.dataset.label}: ${context.raw.toLocaleString()}`;
+                    }
+                  }
+                }
               },
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  ticks: {
+                    callback: function(value) {
+                      return value.toLocaleString();
+                    }
+                  }
+                }
+              }
             }}
           />
         </div>
@@ -121,7 +103,7 @@ const ChartComponent = ({ data }) => {
         borderRadius: '8px',
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
       }}>
-        <h3 style={{ marginBottom: '20px' }}>ข้อมูลรายเดือน</h3>
+        <h3 style={{ marginBottom: '20px' }}>สถิติรายเดือน</h3>
         <div style={{ height: '300px' }}>
           <Line 
             data={monthlyData}
@@ -132,7 +114,24 @@ const ChartComponent = ({ data }) => {
                 legend: {
                   position: 'top',
                 },
+                tooltip: {
+                  callbacks: {
+                    label: function(context) {
+                      return `${context.dataset.label}: ${context.raw.toLocaleString()}`;
+                    }
+                  }
+                }
               },
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  ticks: {
+                    callback: function(value) {
+                      return value.toLocaleString();
+                    }
+                  }
+                }
+              }
             }}
           />
         </div>
@@ -146,7 +145,7 @@ const ChartComponent = ({ data }) => {
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
         gridColumn: '1 / -1'
       }}>
-        <h3 style={{ marginBottom: '20px' }}>จำนวนการลงทะเบียน</h3>
+        <h3 style={{ marginBottom: '20px' }}>สถิติการโพสต์</h3>
         <div style={{ height: '300px' }}>
           <Line 
             data={registrationData}
@@ -157,7 +156,24 @@ const ChartComponent = ({ data }) => {
                 legend: {
                   position: 'top',
                 },
+                tooltip: {
+                  callbacks: {
+                    label: function(context) {
+                      return `${context.dataset.label}: ${context.raw.toLocaleString()}`;
+                    }
+                  }
+                }
               },
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  ticks: {
+                    callback: function(value) {
+                      return value.toLocaleString();
+                    }
+                  }
+                }
+              }
             }}
           />
         </div>
