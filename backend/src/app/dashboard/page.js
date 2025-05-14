@@ -1,11 +1,11 @@
-'use client';
+'use client';  // เพิ่มบรรทัดนี้ที่บรรทัดแรก
+
 import React, { useState, useEffect } from 'react';
 import { db } from "@/firebase";
 import { collection, getDocs } from 'firebase/firestore';
 import { MainLayout } from "../components/layout/MainLayout";
 import { StatsCard } from "../dashboard/StatsCard";
 import ChartComponent from "../dashboard/ChartComponent";
-
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -22,14 +22,20 @@ const Dashboard = () => {
         const usersSnapshot = await getDocs(collection(db, "users"));
         const userCount = usersSnapshot.size;
         
-        // ดึงข้อมูลอื่นๆ (ตัวอย่าง)
+        // ดึงข้อมูลร้านค้า
         const shopsSnapshot = await getDocs(collection(db, "shops"));
         
+        // ดึงข้อมูลโพสต์ขาย
+        const postSaleSnapshot = await getDocs(collection(db, "PostSale"));
+        
+        // ดึงข้อมูลโพสต์บริจาค
+        const postDonateSnapshot = await getDocs(collection(db, "PostDonate"));
+
         setStats({
           users: userCount,
           shops: shopsSnapshot.size,
-          posts: 69, // ตัวอย่างค่า
-          areas: 59  // ตัวอย่างค่า
+          posts: postSaleSnapshot.size, // จำนวนโพสต์ขาย
+          areas: postDonateSnapshot.size  // จำนวนโพสต์บริจาค
         });
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -70,7 +76,7 @@ const Dashboard = () => {
           color="#4bc0c0" 
         />
         <StatsCard 
-          title="บริเวณ" 
+          title="บริจาค" 
           value={stats.areas} 
           color="#9966ff" 
         />
