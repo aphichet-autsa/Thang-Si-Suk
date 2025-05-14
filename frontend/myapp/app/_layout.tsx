@@ -18,6 +18,7 @@ export default function RootLayout() {
 
   return (
     <Stack initialRouteName={isLoggedIn ? "home" : "login"}>
+      {/* เส้นทางต่างๆ ที่กำหนดในแอป */}
       <Stack.Screen name="login" options={{ headerShown: false }} />
       <Stack.Screen name="register" options={{ headerShown: false }} />
       <Stack.Screen name="forgotpassword" options={{ headerShown: false }} />
@@ -30,7 +31,7 @@ export default function RootLayout() {
       <Stack.Screen name="lookpost" options={{ headerShown: false }} />
       <Stack.Screen name="donate" options={{ headerShown: false }} />
       <Stack.Screen name="NoShop" options={{ headerShown: false }} />
-
+      <Stack.Screen name="link" options={{ headerShown: false }} />
     </Stack>
   );
 }

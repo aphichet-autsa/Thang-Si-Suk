@@ -69,7 +69,10 @@ const LookPost = () => {
         </TouchableOpacity>
       )}
 
-      <TouchableOpacity style={styles.contactButton}>
+      <TouchableOpacity
+        style={styles.contactButton}
+        onPress={() => router.push({ pathname: '/link', query: { uid: item.uid } })}  // ส่ง uid ไปยัง LinkScreen
+      >
         <Text style={styles.contactText}>ติดต่อ</Text>
       </TouchableOpacity>
     </View>
@@ -78,7 +81,6 @@ const LookPost = () => {
   return (
     <View style={styles.container}>
       <Header />
-
       <FlatList
         ListHeaderComponent={
           <View style={styles.featureContainer}>
@@ -105,10 +107,7 @@ const FeatureButton = ({ title, icon, onPress }) => (
 );
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
+  container: { flex: 1, backgroundColor: '#f5f5f5' },
   featureContainer: {
     backgroundColor: '#fff',
     borderRadius: 15,
@@ -129,10 +128,7 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     width: 90,
   },
-  featureIcon: {
-    width: 40,
-    height: 40,
-  },
+  featureIcon: { width: 40, height: 40 },
   featureText: {
     marginTop: 5,
     fontSize: 13,
@@ -156,27 +152,14 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   profileImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     marginRight: 10,
   },
-  username: {
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  date: {
-    fontSize: 12,
-    color: '#666',
-  },
-  location: {
-    fontSize: 12,
-    color: '#666',
-  },
-  description: {
-    fontSize: 14,
-    marginBottom: 10,
-  },
+  username: { fontWeight: 'bold', fontSize: 16 },
+  location: { fontSize: 12, color: '#666' },
+  description: { fontSize: 14, marginBottom: 10 },
   postImage: {
     width: 260,
     height: 180,
@@ -190,10 +173,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
   },
-  routeButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
+  routeButtonText: { color: '#fff', fontWeight: 'bold' },
   contactButton: {
     marginTop: 10,
     backgroundColor: '#ededed',

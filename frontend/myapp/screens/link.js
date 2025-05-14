@@ -1,16 +1,41 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import Header from '../components/header'; 
-import BottomNav from '../components/BottomNav'; 
+import { db } from '../config/firebase-config';
+import { doc, getDoc } from 'firebase/firestore';
 
 export default function LinkScreen() {
   const router = useRouter();
+  const { uid } = router.query;  // ดึง uid จาก query params
+  const [contactInfo, setContactInfo] = useState(null);
+
+  useEffect(() => {
+    if (!uid) {
+      console.log("UID is missing!");
+      return;
+    }
+
+    const fetchContactInfo = async () => {
+      const docRef = doc(db, 'Users', uid);  // สมมติว่าข้อมูลผู้ใช้เก็บใน collection "Users"
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        setContactInfo(docSnap.data());  // กำหนดข้อมูลการติดต่อ
+      } else {
+        console.log('ไม่พบเอกสาร!');
+      }
+    };
+
+    fetchContactInfo();
+  }, [uid]);
+
+  if (!contactInfo) {
+    return <Text>กำลังโหลด...</Text>;  // หรือการแสดงสถานะการโหลด
+  }
 
   return (
     <View style={styles.container}>
       <Header />
-
       <ScrollView contentContainerStyle={styles.content}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
           <Image source={require('../assets/back.png')} style={styles.backIcon} />
@@ -18,30 +43,28 @@ export default function LinkScreen() {
 
         <Text style={styles.title}>ช่องทางการติดต่อ</Text>
 
-        {/* กรอบสีขาวครอบทั้งหมด */}
         <View style={styles.socialContainer}>
           <View style={styles.socialItem}>
             <Image source={require('../assets/facebook.png')} style={styles.icon} />
-            <Text style={styles.socialText}>ชื่อเฟส</Text>
+            <Text style={styles.socialText}>{contactInfo.facebook || 'ไม่มีข้อมูล'}</Text>
           </View>
 
           <View style={styles.socialItem}>
             <Image source={require('../assets/line.png')} style={styles.icon} />
-            <Text style={styles.socialText}>ไอดีไลน์</Text>
+            <Text style={styles.socialText}>{contactInfo.lineId || 'ไม่มีข้อมูล'}</Text>
           </View>
 
           <View style={styles.socialItem}>
             <Image source={require('../assets/instagram.png')} style={styles.icon} />
-            <Text style={styles.socialText}>IG:..........</Text>
+            <Text style={styles.socialText}>{contactInfo.instagram || 'ไม่มีข้อมูล'}</Text>
           </View>
 
           <View style={styles.socialItem}>
             <Image source={require('../assets/call.png')} style={styles.icon} />
-            <Text style={styles.socialText}>เบอร์โทร โทรเลย</Text>
+            <Text style={styles.socialText}>{contactInfo.phone || 'ไม่มีข้อมูล'}</Text>
           </View>
         </View>
       </ScrollView>
-
       <BottomNav />
     </View>
   );
@@ -50,7 +73,7 @@ export default function LinkScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#DEF19F', // สีพื้นหลังเป็นสีเขียว
+    backgroundColor: '#DEF19F',  // สีพื้นหลัง
   },
   content: {
     flexGrow: 1,
@@ -75,12 +98,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 25,
     color: '#333',
-    marginTop: 1, // ขยับ "ช่องทางการติดต่อ" ขึ้นไป
   },
   socialContainer: {
-    width: '50%', // ลดความกว้างของกรอบสีขาว
-    alignItems: 'flex-start', // ชิดซ้าย
-    backgroundColor: '#fff', // กรอบสีขาวครอบทั้งหมด
+    width: '50%',
+    backgroundColor: '#fff',
     borderRadius: 15,
     paddingVertical: 20,
     paddingHorizontal: 20,
@@ -88,9 +109,9 @@ const styles = StyleSheet.create({
   socialItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-start', // ไอคอนชิดซ้าย
+    justifyContent: 'flex-start',
     marginBottom: 25,
-    paddingLeft: 15, // เพิ่มระยะห่างจากขอบ
+    paddingLeft: 15,
   },
   icon: {
     width: 40,
@@ -101,6 +122,5 @@ const styles = StyleSheet.create({
   socialText: {
     fontSize: 16,
     color: '#333',
-    lineHeight: 60, // เพิ่มระยะห่างระหว่างบรรทัด
   },
 });
