@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Image, Alert
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Image,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import Header from '../components/header';
@@ -16,6 +23,7 @@ const UPLOAD_PRESET = 'imaguser';
 const MyShopScreen = () => {
   const router = useRouter();
 
+  // State variables
   const [email, setEmail] = useState('');
   const [facebook, setFacebook] = useState('');
   const [facebookLink, setFacebookLink] = useState('');
@@ -26,6 +34,7 @@ const MyShopScreen = () => {
   const [name, setName] = useState('');
   const [profileImage, setProfileImage] = useState(null);
 
+  // Fetch user data on mount
   useEffect(() => {
     const fetchUserData = async () => {
       const auth = getAuth();
@@ -37,6 +46,7 @@ const MyShopScreen = () => {
 
         if (userSnap.exists()) {
           const data = userSnap.data();
+
           setEmail(data.email || '');
           setFacebook(data.facebook || '');
           setFacebookLink(data.facebooklink || '');
@@ -53,6 +63,7 @@ const MyShopScreen = () => {
     fetchUserData();
   }, []);
 
+  // Handle update user data
   const handleUpdate = async () => {
     try {
       const auth = getAuth();
@@ -60,6 +71,7 @@ const MyShopScreen = () => {
 
       if (currentUser) {
         const userRef = doc(db, 'users', currentUser.uid);
+
         await updateDoc(userRef, {
           email,
           facebook,
@@ -71,7 +83,18 @@ const MyShopScreen = () => {
           name,
           profileImageUrl: profileImage,
         });
-        Alert.alert('สำเร็จ', 'อัปเดตข้อมูลเรียบร้อยแล้ว');
+
+        Alert.alert(
+          'สำเร็จ',
+          'อัปเดตข้อมูลเรียบร้อยแล้ว',
+          [
+            {
+              text: 'OK',
+              onPress: () => router.replace('/ShopProfileScreen'),
+            },
+          ],
+          { cancelable: false }
+        );
       }
     } catch (error) {
       console.error('Update error:', error);
@@ -79,10 +102,12 @@ const MyShopScreen = () => {
     }
   };
 
+  // Image picker
   const pickImage = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
     if (!permission.granted) {
-      Alert.alert("แจ้งเตือน", "จำเป็นต้องขอสิทธิ์เข้าถึงรูปภาพ");
+      Alert.alert('แจ้งเตือน', 'จำเป็นต้องขอสิทธิ์เข้าถึงรูปภาพ');
       return;
     }
 
@@ -100,6 +125,7 @@ const MyShopScreen = () => {
     }
   };
 
+  // Upload image to Cloudinary
   const uploadImageToCloudinary = async (uri) => {
     const apiUrl = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
 
@@ -126,13 +152,15 @@ const MyShopScreen = () => {
     }
   };
 
+  // Go back to ShopProfileScreen
   const goBack = () => {
-    router.replace('/home');
+    router.replace('/ShopProfileScreen');
   };
 
   return (
     <View style={styles.container}>
       <Header />
+
       <TouchableOpacity style={styles.backButton} onPress={goBack}>
         <Image source={require('../assets/back.png')} style={styles.backIcon} />
       </TouchableOpacity>
@@ -140,12 +168,16 @@ const MyShopScreen = () => {
       <ScrollView contentContainerStyle={styles.content}>
         <TouchableOpacity onPress={pickImage}>
           <Image
-            source={profileImage ? { uri: profileImage } : require('../assets/profile.png')}
+            source={
+              profileImage
+                ? { uri: profileImage }
+                : require('../assets/profile.png')
+            }
             style={styles.profile}
           />
           <Text style={styles.changeImageText}>เปลี่ยนรูป</Text>
         </TouchableOpacity>
-        
+
         <Text style={styles.label}>ชื่อ</Text>
         <TextInput style={styles.input} value={name} onChangeText={setName} />
 
@@ -174,6 +206,7 @@ const MyShopScreen = () => {
           <TouchableOpacity style={styles.cancelBtn} onPress={goBack}>
             <Text style={styles.buttonText}>ยกเลิก</Text>
           </TouchableOpacity>
+
           <TouchableOpacity style={styles.confirmBtn} onPress={handleUpdate}>
             <Text style={styles.buttonText}>ยืนยัน</Text>
           </TouchableOpacity>
@@ -187,17 +220,82 @@ const MyShopScreen = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
+
   content: { padding: 20, paddingBottom: 100 },
-  profile: { width: 100, height: 100, borderRadius: 50, alignSelf: 'center', marginTop: 10 },
-  changeImageText: { textAlign: 'center', fontSize: 12, marginTop: 5 },
-  label: { fontSize: 13, color: '#666', marginBottom: 4, marginTop: 10 },
-  input: { width: '100%', height: 45, borderColor: '#ccc', borderWidth: 1, borderRadius: 10, paddingHorizontal: 10, marginBottom: 8 },
-  buttonRow: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginTop: 20 },
-  cancelBtn: { backgroundColor: '#eee', padding: 12, borderRadius: 10, flex: 1, marginRight: 10 },
-  confirmBtn: { backgroundColor: '#A3CC01', padding: 12, borderRadius: 10, flex: 1 },
-  buttonText: { textAlign: 'center', fontWeight: 'bold' },
-  backButton: { position: 'absolute', top: 70, left: 10, padding: 10, backgroundColor: '#fff', borderRadius: 50, zIndex: 1 },
-  backIcon: { width: 30, height: 30, resizeMode: 'contain' },
+
+  profile: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    alignSelf: 'center',
+    marginTop: 10,
+  },
+
+  changeImageText: {
+    textAlign: 'center',
+    fontSize: 12,
+    marginTop: 5,
+  },
+
+  label: {
+    fontSize: 13,
+    color: '#666',
+    marginBottom: 4,
+    marginTop: 10,
+  },
+
+  input: {
+    width: '100%',
+    height: 45,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    marginBottom: 8,
+  },
+
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: 20,
+  },
+
+  cancelBtn: {
+    backgroundColor: '#eee',
+    padding: 12,
+    borderRadius: 10,
+    flex: 1,
+    marginRight: 10,
+  },
+
+  confirmBtn: {
+    backgroundColor: '#A3CC01',
+    padding: 12,
+    borderRadius: 10,
+    flex: 1,
+  },
+
+  buttonText: {
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
+
+  backButton: {
+    position: 'absolute',
+    top: 70,
+    left: 10,
+    padding: 10,
+    backgroundColor: '#fff',
+    borderRadius: 50,
+    zIndex: 1,
+  },
+
+  backIcon: {
+    width: 30,
+    height: 30,
+    resizeMode: 'contain',
+  },
 });
 
 export default MyShopScreen;
