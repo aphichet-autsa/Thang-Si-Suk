@@ -82,6 +82,11 @@ const DonateScreen = () => {
         />
         <View>
           <Text style={styles.username}>{item.ownerName || 'ไม่ระบุชื่อ'}</Text>
+          {item.createdAt?.toDate && (
+          <Text style={styles.date}>
+            {item.createdAt.toDate().toLocaleDateString()}
+          </Text>
+        )}
           <Text style={styles.location}>{item.address || 'ไม่ระบุตำแหน่ง'}</Text>
         </View>
       </View>
@@ -151,24 +156,58 @@ const DonateScreen = () => {
             <Text style={styles.modalTitle}>ช่องทางการติดต่อ</Text>
 
             <ScrollView>
-              <View style={styles.socialItem}>
-                <Image source={require('../assets/facebook.png')} style={styles.icon} />
-                <Text style={styles.socialText}>{contactInfo.facebook || 'ไม่มีข้อมูล'}</Text>
-              </View>
-              <View style={styles.socialItem}>
-                <Image source={require('../assets/line.png')} style={styles.icon} />
-                <Text style={styles.socialText}>{contactInfo.idline || 'ไม่มีข้อมูล'}</Text>
-              </View>
-              <View style={styles.socialItem}>
-                <Image source={require('../assets/instagram.png')} style={styles.icon} />
-                <Text style={styles.socialText}>{contactInfo.ig || 'ไม่มีข้อมูล'}</Text>
-              </View>
-              <View style={styles.socialItem}>
-                <Image source={require('../assets/call.png')} style={styles.icon} />
-                <Text style={styles.socialText}>{contactInfo.phoneNumber || 'ไม่มีข้อมูล'}</Text>
-              </View>
-            </ScrollView>
+            <TouchableOpacity
+              style={styles.socialItem}
+              onPress={() => {
+                if (contactInfo.facebook) {
+                  // ลิงก์ Facebook (แก้ URL ตาม username หรือ page)
+                  Linking.openURL(`https://www.facebook.com/${contactInfo.facebook}`);
+                }
+              }}
+            >
+              <Image source={require('../assets/facebook.png')} style={styles.icon} />
+              <Text style={styles.socialText}>{contactInfo.facebook || 'ไม่มีข้อมูล'}</Text>
+            </TouchableOpacity>
 
+            <TouchableOpacity
+              style={styles.socialItem}
+              onPress={() => {
+                if (contactInfo.idline) {
+                  // ลิงก์ Line (เปิดแอป Line ด้วย user id หรือ line url)
+                  Linking.openURL(`line://ti/p/${contactInfo.idline}`);
+                }
+              }}
+            >
+              <Image source={require('../assets/line.png')} style={styles.icon} />
+              <Text style={styles.socialText}>{contactInfo.idline || 'ไม่มีข้อมูล'}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.socialItem}
+              onPress={() => {
+                if (contactInfo.ig) {
+                  // ลิงก์ Instagram
+                  Linking.openURL(`https://instagram.com/${contactInfo.ig}`);
+                }
+              }}
+            >
+              <Image source={require('../assets/instagram.png')} style={styles.icon} />
+              <Text style={styles.socialText}>{contactInfo.ig || 'ไม่มีข้อมูล'}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.socialItem}
+              onPress={() => {
+                if (contactInfo.phoneNumber) {
+                  // โทรออก (ใช้ tel: protocol)
+                  Linking.openURL(`tel:${contactInfo.phoneNumber}`);
+                }
+              }}
+            >
+              <Image source={require('../assets/call.png')} style={styles.icon} />
+              <Text style={styles.socialText}>{contactInfo.phoneNumber || 'ไม่มีข้อมูล'}</Text>
+            </TouchableOpacity>
+          </ScrollView>
             <TouchableOpacity
               style={styles.closeButton}
               onPress={() => setModalVisible(false)}
@@ -307,6 +346,11 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
   },
+  date: {
+  fontSize: 12,
+  color: '#666',
+  marginBottom: 2,
+},
 });
 
 export default DonateScreen;
