@@ -10,7 +10,8 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import Header from '../components/header';
 import { getAuth } from 'firebase/auth';
 
-const LOCATIONIQ_API_KEY = 'pk.8480f03915285ddcb4dbcc718b32297d'; // Your LocationIQ API Key
+const CLOUD_NAME = 'dd0ro6iov';
+const UPLOAD_PRESET = 'imaguser';
 
 export default function RegisterShopScreen() {
   const router = useRouter();
@@ -29,9 +30,8 @@ export default function RegisterShopScreen() {
   const [profileImageUri, setProfileImageUri] = useState(null);
   const [shopImageUris, setShopImageUris] = useState([]);
   const [uploading, setUploading] = useState(false);
-  const [location, setLocation] = useState(null);
+  const [location, setLocation] = useState(null); // ✅ สำหรับเก็บพิกัดร้าน
 
-  // Function to check if the user already has a shop
   useEffect(() => {
     const checkIfShopExists = async () => {
       const auth = getAuth();
@@ -45,7 +45,7 @@ export default function RegisterShopScreen() {
 
         if (!querySnapshot.empty) {
           Alert.alert('คุณได้สมัครร้านค้าไปแล้ว', 'คุณไม่สามารถสมัครร้านค้าใหม่ได้');
-          router.push('/shop'); // Go to existing shop screen
+          router.push('/shop'); // ไปหน้าร้านค้าที่มีอยู่
         }
       }
     };
@@ -53,28 +53,6 @@ export default function RegisterShopScreen() {
     checkIfShopExists();
   }, []);
 
-  // Function to fetch coordinates from LocationIQ API
-  const fetchCoordsFromLocationIQ = async (address) => {
-    const encoded = encodeURIComponent(address);
-    const url = `https://us1.locationiq.com/v1/search.php?key=${LOCATIONIQ_API_KEY}&q=${encoded}&format=json`;
-
-    try {
-      const response = await axios.get(url);
-      const result = response.data[0];
-      if (result) {
-        return {
-          latitude: parseFloat(result.lat),
-          longitude: parseFloat(result.lon),
-        };
-      }
-      return null;
-    } catch (error) {
-      console.error("❌ Error fetching from LocationIQ:", error.message);
-      return null;
-    }
-  };
-
-  // Function to pick location using the device
   const handleLocationPick = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
@@ -83,16 +61,18 @@ export default function RegisterShopScreen() {
     }
 
     try {
-      const location = await Location.getCurrentPositionAsync({});
-      const geocode = await Location.reverseGeocodeAsync(location.coords);
+      const loc = await Location.getCurrentPositionAsync({});
+      setLocation(loc); // ✅ เก็บตำแหน่งพิกัด
+
+      const geocode = await Location.reverseGeocodeAsync(loc.coords);
       const place = geocode[0];
       const fullAddress = `${place.name || ''} ${place.street || ''} ${place.district || ''} ${place.city || ''} ${place.region || ''}`.trim();
       setPinAddress(fullAddress);
 
-      // Use LocationIQ to get coordinates from the address
+      // แปลงตำแหน่งที่ตั้งที่ได้เป็นพิกัดจาก LocationIQ API
       const coords = await fetchCoordsFromLocationIQ(fullAddress);
       if (coords) {
-        setPinAddress(fullAddress); // Set address after converting to coordinates
+        setPinAddress(fullAddress); // ตั้งค่าพิกัดใหม่
       } else {
         console.warn("ไม่พบพิกัดจาก LocationIQ");
       }
@@ -102,10 +82,9 @@ export default function RegisterShopScreen() {
     }
   };
 
-  // Function to pick an image for profile or shop
   const handleImagePick = async (type) => {
-    let permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permissionResult.granted) {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
       alert('คุณต้องให้สิทธิ์การเข้าถึงรูปภาพ');
       return;
     }
@@ -120,7 +99,7 @@ export default function RegisterShopScreen() {
     if (!result.canceled && result.assets?.[0]?.uri) {
       const manipResult = await ImageManipulator.manipulateAsync(
         result.assets[0].uri,
-        [{ resize: { width: 800 } }],
+        [{ resize: { width: 800 } }], 
         { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
       );
       if (type === 'profile') {
@@ -133,12 +112,10 @@ export default function RegisterShopScreen() {
     }
   };
 
-  // Function to remove shop images
   const handleRemoveShopImage = (indexToRemove) => {
     setShopImageUris(prev => prev.filter((_, index) => index !== indexToRemove));
   };
 
-  // Function to upload images to Cloudinary and add shop data to Firestore
   const handleUpload = async () => {
     if (!profileImageUri || shopImageUris.length === 0) {
       alert("กรุณาเลือกรูปภาพทั้งสองอัน");
@@ -167,8 +144,6 @@ export default function RegisterShopScreen() {
           name: filename,
           type: `image/${fileType}`,
         });
-        formData.append('upload_preset', 'shop123');
-
         const response = await axios.post(
           'https://api.cloudinary.com/v1_1/dd0ro6iov/image/upload',
           formData,
@@ -205,10 +180,13 @@ export default function RegisterShopScreen() {
     }
   };
 
-  // Function to handle form submission
   const handleSubmit = () => {
     if (!shopName || !ownerName || !address || !pinAddress || !district || !amphoe || !province || !zipcode || !phone || !category || !detail) {
       alert('กรุณากรอกข้อมูลให้ครบ');
+      return;
+    }
+    if (!location) {
+      alert('กรุณาปักหมุดตำแหน่งร้านของคุณ');
       return;
     }
     handleUpload();
@@ -336,4 +314,7 @@ const styles = StyleSheet.create({
     zIndex: 10
   },
   removeButtonText: { color: 'white', fontWeight: 'bold', fontSize: 12 },
-});
+  removeButtonText: {
+    color: 'white', fontWeight: 'bold', fontSize: 12
+  },
+}); 
