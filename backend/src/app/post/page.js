@@ -44,7 +44,7 @@ export default function AdminPostScreen() {
               post.profileImageUrl = '/default-avatar.png';
             }
           } catch (error) {
-            console.error("❌ ดึงข้อมูล user ล้มเหลว:", error);
+            console.error("ดึงข้อมูล user ล้มเหลว:", error);
             post.ownerName = 'ไม่ระบุชื่อ';
             post.profileImageUrl = '/default-avatar.png';
           }
@@ -268,7 +268,6 @@ export default function AdminPostScreen() {
                       </div>
                     </div>
                   )}
-                  <p style={{ fontSize: 12, color: '#666' }}>💬 ติดต่อ</p>
                 </div>
 
                 <div

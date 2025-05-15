@@ -1,25 +1,73 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, FlatList, Linking } from 'react-native';
+import {
+  View, Text, Image, StyleSheet, TouchableOpacity, FlatList, Linking, Modal, ScrollView,
+} from 'react-native';
 import Header from '../components/header';
 import BottomNav from '../components/BottomNav';
 import { useRouter } from 'expo-router';
 import { db } from '../config/firebase-config';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 
 const DonateScreen = () => {
   const router = useRouter();
   const [posts, setPosts] = useState([]);
 
+  // Modal state
+  const [modalVisible, setModalVisible] = useState(false);
+  const [contactInfo, setContactInfo] = useState({
+    facebook: '',
+    idline: '',
+    ig: '',
+    phoneNumber: '',
+  });
+
   useEffect(() => {
     const fetchPosts = async () => {
       const snapshot = await getDocs(collection(db, 'PostDonate'));
-      const data = snapshot.docs
-        .map(doc => ({ id: doc.id, ...doc.data() }))
-        .sort((a, b) => b.createdAt?.seconds - a.createdAt?.seconds); // เรียงล่าสุดก่อน
-      setPosts(data);
+      const postsData = [];
+
+      for (const docSnap of snapshot.docs) {
+        const post = { id: docSnap.id, ...docSnap.data() };
+
+        // ดึงข้อมูล user จาก uid
+        if (post.uid) {
+          const userRef = doc(db, 'users', post.uid);
+          const userSnap = await getDoc(userRef);
+          if (userSnap.exists()) {
+            const userData = userSnap.data();
+            post.facebook = userData.facebook || '';
+            post.idline = userData.idline || '';
+            post.ig = userData.ig || '';
+            post.phoneNumber = userData.phoneNumber || '';
+            post.ownerName = post.ownerName || userData.name || 'ไม่ระบุชื่อ';
+            post.profileImageUrl = post.profileImageUrl || userData.profileImageUrl || '';
+          } else {
+            post.facebook = '';
+            post.idline = '';
+            post.ig = '';
+            post.phoneNumber = '';
+          }
+        }
+
+        postsData.push(post);
+      }
+
+      postsData.sort((a, b) => b.createdAt?.seconds - a.createdAt?.seconds);
+      setPosts(postsData);
     };
+
     fetchPosts();
   }, []);
+
+  const openContactModal = (item) => {
+    setContactInfo({
+      facebook: item.facebook || '',
+      idline: item.idline || '',
+      ig: item.ig || '',
+      phoneNumber: item.phoneNumber || '',
+    });
+    setModalVisible(true);
+  };
 
   const renderPost = ({ item }) => (
     <View style={styles.postCard}>
@@ -34,6 +82,11 @@ const DonateScreen = () => {
         />
         <View>
           <Text style={styles.username}>{item.ownerName || 'ไม่ระบุชื่อ'}</Text>
+          {item.createdAt?.toDate && (
+          <Text style={styles.date}>
+            {item.createdAt.toDate().toLocaleDateString()}
+          </Text>
+        )}
           <Text style={styles.location}>{item.address || 'ไม่ระบุตำแหน่ง'}</Text>
         </View>
       </View>
@@ -66,7 +119,7 @@ const DonateScreen = () => {
 
       <TouchableOpacity
         style={styles.contactButton}
-        onPress={() => router.push({ pathname: '/link', query: { uid: item.uid } })}  // ส่ง uid ไปยัง LinkScreen
+        onPress={() => openContactModal(item)}
       >
         <Text style={styles.contactText}>ติดต่อ</Text>
       </TouchableOpacity>
@@ -90,6 +143,80 @@ const DonateScreen = () => {
         contentContainerStyle={{ paddingBottom: 100 }}
       />
       <BottomNav />
+
+      {/* Modal แสดงข้อมูลติดต่อ */}
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>ช่องทางการติดต่อ</Text>
+
+            <ScrollView>
+            <TouchableOpacity
+              style={styles.socialItem}
+              onPress={() => {
+                if (contactInfo.facebook) {
+                  // ลิงก์ Facebook (แก้ URL ตาม username หรือ page)
+                  Linking.openURL(`https://www.facebook.com/${contactInfo.facebook}`);
+                }
+              }}
+            >
+              <Image source={require('../assets/facebook.png')} style={styles.icon} />
+              <Text style={styles.socialText}>{contactInfo.facebook || 'ไม่มีข้อมูล'}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.socialItem}
+              onPress={() => {
+                if (contactInfo.idline) {
+                  // ลิงก์ Line (เปิดแอป Line ด้วย user id หรือ line url)
+                  Linking.openURL(`line://ti/p/${contactInfo.idline}`);
+                }
+              }}
+            >
+              <Image source={require('../assets/line.png')} style={styles.icon} />
+              <Text style={styles.socialText}>{contactInfo.idline || 'ไม่มีข้อมูล'}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.socialItem}
+              onPress={() => {
+                if (contactInfo.ig) {
+                  // ลิงก์ Instagram
+                  Linking.openURL(`https://instagram.com/${contactInfo.ig}`);
+                }
+              }}
+            >
+              <Image source={require('../assets/instagram.png')} style={styles.icon} />
+              <Text style={styles.socialText}>{contactInfo.ig || 'ไม่มีข้อมูล'}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.socialItem}
+              onPress={() => {
+                if (contactInfo.phoneNumber) {
+                  // โทรออก (ใช้ tel: protocol)
+                  Linking.openURL(`tel:${contactInfo.phoneNumber}`);
+                }
+              }}
+            >
+              <Image source={require('../assets/call.png')} style={styles.icon} />
+              <Text style={styles.socialText}>{contactInfo.phoneNumber || 'ไม่มีข้อมูล'}</Text>
+            </TouchableOpacity>
+          </ScrollView>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={{ fontWeight: 'bold' }}>ปิด</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -168,7 +295,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
   },
-  routeButtonText: { color: '#fff', fontWeight: 'bold' },
   contactButton: {
     marginTop: 10,
     backgroundColor: '#ededed',
@@ -176,10 +302,55 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
   },
-  contactText: {
-    fontWeight: 'bold',
-    color: '#333',
+  routeButtonText: { color: '#fff', fontWeight: 'bold' },
+
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
+  modalContent: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 15,
+    width: '80%',
+    maxHeight: '70%',
+  },
+  modalTitle: {
+    fontWeight: 'bold',
+    fontSize: 20,
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  socialItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  icon: {
+    width: 30,
+    height: 30,
+    marginRight: 15,
+  },
+  socialText: {
+    fontSize: 16,
+    color: '#333',
+    flexShrink: 1,
+  },
+  closeButton: {
+    marginTop: 10,
+    backgroundColor: '#ddd',
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  date: {
+  fontSize: 12,
+  color: '#666',
+  marginBottom: 2,
+},
 });
 
 export default DonateScreen;

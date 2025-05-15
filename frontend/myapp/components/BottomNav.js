@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, TouchableOpacity, Image, Text, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, usePathname } from 'expo-router';
 
 const NavItem = ({ icon, label, onPress, active }) => {
   return (
@@ -13,22 +13,60 @@ const NavItem = ({ icon, label, onPress, active }) => {
 
 export default function BottomNav() {
   const router = useRouter();
-  const [activeIndex, setActiveIndex] = useState(0);
+  const pathname = usePathname();
 
-  const handleNavItemPress = (index, route) => {
-    setActiveIndex(index);
+  const getActiveIndex = () => {
+    switch (pathname) {
+      case '/home':
+        return 0;
+      case '/shop':
+        return 1;
+      case '/Post':
+        return 2;
+      case '/nearshops':
+        return 3;
+      case '/ShopProfileScreen':
+        return 4;
+      default:
+        return -1;
+    }
+  };
+
+  const activeIndex = getActiveIndex();
+
+  const handleNavItemPress = (route) => {
     router.push(route);
   };
 
   return (
     <View style={styles.navBar}>
-      <NavItem icon={require('../assets/home-2.png')} label="หน้าแรก" active={activeIndex === 0} onPress={() => handleNavItemPress(0, '/home')} />
-      <NavItem icon={require('../assets/shop.png')} label="ร้านรับซื้อ" active={activeIndex === 1} onPress={() => handleNavItemPress(1, '/shop')} />
-      <TouchableOpacity style={styles.navItemCenter} onPress={() => handleNavItemPress(2, '/Post')}>
+      <NavItem
+        icon={require('../assets/home-2.png')}
+        label="หน้าแรก"
+        active={activeIndex === 0}
+        onPress={() => handleNavItemPress('/home')}
+      />
+      <NavItem
+        icon={require('../assets/shop.png')}
+        label="ร้านรับซื้อ"
+        active={activeIndex === 1}
+        onPress={() => handleNavItemPress('/shop')}
+      />
+      <TouchableOpacity style={styles.navItemCenter} onPress={() => handleNavItemPress('/Post')}>
         <Image source={require('../assets/plus.png')} style={styles.bottomIconCenter} />
       </TouchableOpacity>
-      <NavItem icon={require('../assets/location.png')} label="ร้านใกล้ฉัน" active={activeIndex === 3} onPress={() => handleNavItemPress(3, '/nearshops')} />
-      <NavItem icon={require('../assets/test-account.png')} label="ฉัน" active={activeIndex === 4} onPress={() => handleNavItemPress(4, '/ShopProfileScreen')} />
+      <NavItem
+        icon={require('../assets/location.png')}
+        label="ร้านใกล้ฉัน"
+        active={activeIndex === 3}
+        onPress={() => handleNavItemPress('/nearshops')}
+      />
+      <NavItem
+        icon={require('../assets/test-account.png')}
+        label="ฉัน"
+        active={activeIndex === 4}
+        onPress={() => handleNavItemPress('/ShopProfileScreen')}
+      />
     </View>
   );
 }
@@ -37,7 +75,7 @@ const styles = StyleSheet.create({
   navBar: {
     backgroundColor: '#fff',
     flexDirection: 'row',
-    justifyContent: 'space-between', // ใช้ space-between เพื่อให้ระยะห่างระหว่างปุ่มเท่ากัน
+    justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 12,
     width: '100%',
@@ -45,19 +83,19 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     elevation: 8,
   },
-  navItem: { 
-    alignItems: 'center', 
-    flex: 1, 
+  navItem: {
+    alignItems: 'center',
+    flex: 1,
     justifyContent: 'center',
-    paddingHorizontal: 8, // เพิ่มระยะห่างระหว่างปุ่ม
+    paddingHorizontal: 8,
   },
-  navIcon: { 
-    width: 30, 
-    height: 30, 
-    tintColor: '#000' 
+  navIcon: {
+    width: 30,
+    height: 30,
+    tintColor: '#000',
   },
-  navIconActive: { 
-    tintColor: '#B7E305' 
+  navIconActive: {
+    tintColor: '#B7E305',
   },
   navItemCenter: {
     justifyContent: 'center',
@@ -73,12 +111,12 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 4,
   },
-  bottomIconCenter: { 
-    width: 30, 
-    height: 30 
+  bottomIconCenter: {
+    width: 30,
+    height: 30,
   },
-  navLabel: { 
-    fontSize: 11, 
-    marginTop: 3 
+  navLabel: {
+    fontSize: 11,
+    marginTop: 3,
   },
 });

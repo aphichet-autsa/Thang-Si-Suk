@@ -54,25 +54,29 @@ export default function RegisterShopScreen() {
   }, []);
 
   // Function to fetch coordinates from LocationIQ API
-  const fetchCoordsFromLocationIQ = async (address) => {
-    const encoded = encodeURIComponent(address);
-    const url = `https://us1.locationiq.com/v1/search.php?key=${LOCATIONIQ_API_KEY}&q=${encoded}&format=json`;
+ const fetchCoordsFromLocationIQ = async (address) => {
+  const encoded = encodeURIComponent(address);
+  const url = `https://us1.locationiq.com/v1/search.php?key=${LOCATIONIQ_API_KEY}&q=${encoded}&format=json`;
 
-    try {
-      const response = await axios.get(url);
+  try {
+    const response = await axios.get(url);
+    console.log('LocationIQ response status:', response.status);
+    console.log('LocationIQ response data:', response.data);
+
+    if (response.status === 200 && response.data.length > 0) {
       const result = response.data[0];
-      if (result) {
-        return {
-          latitude: parseFloat(result.lat),
-          longitude: parseFloat(result.lon),
-        };
-      }
-      return null;
-    } catch (error) {
-      console.error("❌ Error fetching from LocationIQ:", error.message);
-      return null;
+      return {
+        latitude: parseFloat(result.lat),
+        longitude: parseFloat(result.lon),
+      };
     }
-  };
+    return null;
+  } catch (error) {
+    console.error("Error fetching from LocationIQ:", error.response?.data || error.message);
+    return null;
+  }
+};
+
 
   // Function to pick location using the device
   const handleLocationPick = async () => {
@@ -184,16 +188,25 @@ export default function RegisterShopScreen() {
       const profileImageUrl = await uploadToCloudinary(profileImageUri);
       const shopImageUrls = await Promise.all(shopImageUris.map(uri => uploadToCloudinary(uri)));
 
-      await addDoc(collection(db, 'shops'), {
-        uid, shopName, ownerName, address, district, amphoe, province, zipcode,
-        phone, category, detail, pinAddress,
-        coords: location?.coords ? {
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-        } : null, // ✅ บันทึกพิกัด
-        profileImageUrl, shopImageUrls,
-        createdAt: new Date()
-      });
+   const shopsSnapshot = await getDocs(collection(db, 'shops'));
+    let maxId = 0;
+    shopsSnapshot.forEach(doc => {
+      const data = doc.data();
+      if (data.id && data.id > maxId) maxId = data.id;
+    });
+    const newId = maxId + 1;
+
+    await addDoc(collection(db, 'shops'), {
+      id: newId,  // <-- เพิ่ม id ที่สร้างใหม่
+      uid, shopName, ownerName, address, district, amphoe, province, zipcode,
+      phone, category, detail, pinAddress,
+      coords: location?.coords ? {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      } : null,
+      profileImageUrl, shopImageUrls,
+      createdAt: new Date()
+    });
 
       Alert.alert('อัปโหลดรูปภาพสำเร็จ');
       router.push('/shop');
