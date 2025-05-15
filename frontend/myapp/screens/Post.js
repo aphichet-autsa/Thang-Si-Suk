@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
-  TextInput, Image, FlatList, Alert, Linking
+  TextInput, Image, FlatList, Alert, Linking, ActivityIndicator
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
@@ -21,6 +21,7 @@ export default function PostScreen() {
   const [address, setAddress] = useState('');
   const [coords, setCoords] = useState(null);
   const [postType, setPostType] = useState('buy');
+  const [uploading, setUploading] = useState(false); // เพิ่ม state ตัวนี้
 
   useEffect(() => {
     const checkPermissions = async () => {
@@ -91,9 +92,11 @@ export default function PostScreen() {
   };
 
   const uploadImagesAndSavePost = async () => {
+    setUploading(true); // เริ่มอัปโหลดตั้งสถานะ uploading = true
     try {
       if (!caption || images.length === 0) {
         Alert.alert('กรุณาใส่คำบรรยายและเลือกรูปอย่างน้อย 1 รูป');
+        setUploading(false);
         return;
       }
 
@@ -101,6 +104,7 @@ export default function PostScreen() {
       const currentUser = auth.currentUser;
       if (!currentUser) {
         Alert.alert('กรุณาเข้าสู่ระบบก่อนโพสต์');
+        setUploading(false);
         return;
       }
 
@@ -110,7 +114,6 @@ export default function PostScreen() {
       const userSnap = await getDoc(userRef);
       const userData = userSnap.exists() ? userSnap.data() : {};
       const ownerName = userData.name || '';
-
 
       // อัปโหลดรูปภาพไป Cloudinary
       const uploadedUrls = [];
@@ -174,6 +177,8 @@ export default function PostScreen() {
     } catch (error) {
       console.error('Post error:', error);
       Alert.alert('เกิดข้อผิดพลาดในการโพสต์');
+    } finally {
+      setUploading(false); // เสร็จแล้วตั้งสถานะ uploading = false
     }
   };
 
@@ -268,8 +273,10 @@ export default function PostScreen() {
           >
             <Text style={styles.buttonText}>ยกเลิก</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.confirmButton} onPress={uploadImagesAndSavePost}>
-            <Text style={styles.buttonText}>ยืนยัน</Text>
+          <TouchableOpacity style={styles.confirmButton} onPress={uploadImagesAndSavePost} disabled={uploading} >
+            <Text style={styles.buttonText}>
+              {uploading ? 'กำลังโพสต์...' : 'ยืนยัน'}
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
