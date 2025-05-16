@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
-  TextInput, Image, FlatList, Alert, Linking
+  TextInput, Image, FlatList, Alert, Linking, ActivityIndicator
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import Header from '../components/header';
 import BottomNav from '../components/BottomNav';
-import { db, storage } from '../config/firebase-config';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { doc, getDoc } from 'firebase/firestore'; 
+import { db } from '../config/firebase-config';
+import { collection, doc, setDoc, serverTimestamp, getDoc, query, getDocs } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import axios from 'axios';
 
@@ -22,6 +21,7 @@ export default function PostScreen() {
   const [address, setAddress] = useState('');
   const [coords, setCoords] = useState(null);
   const [postType, setPostType] = useState('buy');
+  const [uploading, setUploading] = useState(false); // เพิ่ม state ตัวนี้
 
   useEffect(() => {
     const checkPermissions = async () => {
@@ -67,7 +67,6 @@ export default function PostScreen() {
       alert('ไม่ได้รับอนุญาตให้เข้าถึงตำแหน่ง');
       return;
     }
-
     try {
       const loc = await Location.getCurrentPositionAsync({});
       const geocode = await Location.reverseGeocodeAsync(loc.coords);
@@ -76,7 +75,7 @@ export default function PostScreen() {
 
       setCoords({
         latitude: loc.coords.latitude,
-        longitude: loc.coords.longitude
+        longitude: loc.coords.longitude,
       });
       setAddress(fullAddress);
     } catch (err) {
@@ -93,27 +92,30 @@ export default function PostScreen() {
   };
 
   const uploadImagesAndSavePost = async () => {
+    setUploading(true); // เริ่มอัปโหลดตั้งสถานะ uploading = true
     try {
       if (!caption || images.length === 0) {
         Alert.alert('กรุณาใส่คำบรรยายและเลือกรูปอย่างน้อย 1 รูป');
+        setUploading(false);
         return;
       }
-  
+
       const auth = getAuth();
       const currentUser = auth.currentUser;
       if (!currentUser) {
         Alert.alert('กรุณาเข้าสู่ระบบก่อนโพสต์');
+        setUploading(false);
         return;
       }
-      
+
       const uid = currentUser.uid;
-  
+
       const userRef = doc(db, 'users', uid);
       const userSnap = await getDoc(userRef);
       const userData = userSnap.exists() ? userSnap.data() : {};
       const ownerName = userData.name || '';
-      const profileImageUrl = userData.photouser || '';
-  
+
+      // อัปโหลดรูปภาพไป Cloudinary
       const uploadedUrls = [];
       for (const uri of images) {
         const formData = new FormData();
@@ -125,14 +127,30 @@ export default function PostScreen() {
           type: `image/${fileType}`,
         });
         formData.append('upload_preset', 'postuser');
-  
+
         const response = await axios.post('https://api.cloudinary.com/v1_1/dd0ro6iov/image/upload', formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
         uploadedUrls.push(response.data.secure_url);
       }
-  
-      await addDoc(collection(db, postType === 'donate' ? 'PostDonate' : 'PostSale'), {
+
+      const postCollectionName = postType === 'donate' ? 'PostDonate' : 'PostSale';
+      const postCollection = collection(db, postCollectionName);
+
+      // นับจำนวนโพสต์ใน collection นี้
+      const q = query(postCollection);
+      const querySnapshot = await getDocs(q);
+      const count = querySnapshot.size;
+
+      // สร้าง postId เป็น B1, B2,... หรือ D1, D2,...
+      const prefix = postType === 'donate' ? 'D' : 'B';
+      const postId = prefix + (count + 1);
+
+      // สร้าง doc ref ใหม่
+      const newDocRef = doc(postCollection);
+
+      const postData = {
+        postId,
         caption,
         imageUrls: uploadedUrls,
         address,
@@ -140,28 +158,29 @@ export default function PostScreen() {
         type: postType,
         uid,
         ownerName,
-        profileImageUrl,
         createdAt: serverTimestamp(),
-      });
-  
+      };
+
+      await setDoc(newDocRef, postData);
+
       Alert.alert('โพสต์สำเร็จ!');
       setCaption('');
       setImages([]);
       setAddress('');
       setCoords(null);
-  
-      // นำทางไปหน้าแตกต่างกันตามประเภทของโพสต์
+
       if (postType === 'buy') {
-        navigation.navigate('lookpost');  // หากโพสต์ประเภท "ซื้อขาย" ไปที่หน้า lookpost
+        navigation.navigate('lookpost');
       } else if (postType === 'donate') {
-        navigation.navigate('donate');  // หากโพสต์ประเภท "บริจาค" ไปที่หน้า donate
+        navigation.navigate('donate');
       }
     } catch (error) {
       console.error('Post error:', error);
       Alert.alert('เกิดข้อผิดพลาดในการโพสต์');
+    } finally {
+      setUploading(false); // เสร็จแล้วตั้งสถานะ uploading = false
     }
   };
-  
 
   const renderImageItem = ({ item, index }) => (
     <TouchableOpacity
@@ -243,11 +262,21 @@ export default function PostScreen() {
           </TouchableOpacity>
         )}
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.cancelButton}>
+          <TouchableOpacity
+            style={styles.cancelButton}
+            onPress={() => {
+              setCaption('');
+              setImages([]);
+              setAddress('');
+              setCoords(null);
+            }}
+          >
             <Text style={styles.buttonText}>ยกเลิก</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.confirmButton} onPress={uploadImagesAndSavePost}>
-            <Text style={styles.buttonText}>ยืนยัน</Text>
+          <TouchableOpacity style={styles.confirmButton} onPress={uploadImagesAndSavePost} disabled={uploading} >
+            <Text style={styles.buttonText}>
+              {uploading ? 'กำลังโพสต์...' : 'ยืนยัน'}
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -257,118 +286,128 @@ export default function PostScreen() {
 }
 
 const styles = StyleSheet.create({
-  subHeader: 
-  {
-    flexDirection: 'row', 
-    alignItems: 'center', 
+  subHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 15, 
+    paddingHorizontal: 15,
     paddingVertical: 10,
-    backgroundColor: '#B7E305', 
-    borderBottomWidth: 1, 
+    backgroundColor: '#B7E305',
+    borderBottomWidth: 1,
     borderColor: '#ddd',
   },
   subHeaderTitle: {
-    fontSize: 25, 
-    fontWeight: 'bold', 
+    fontSize: 25,
+    fontWeight: 'bold',
     color: '#fff',
   },
-  smallIcon: 
-  { width: 40, 
-    height: 40 },
-  iconContainer: 
-  { flexDirection:'row', 
-    justifyContent: 'space-between',
-    width: 90 },
-  scrollContent: 
-  { padding: 20, 
-    paddingBottom: 150, 
-    backgroundColor: '#fff' },
-  captionInput: 
-  {
-    marginBottom: 15,
-     padding: 10, 
-     fontSize: 16,
-    backgroundColor: '#f8f8f8',
-     borderRadius: 10,
+  smallIcon: {
+    width: 40,
+    height: 40,
   },
-  imageList: 
-  { marginTop: 20, 
-    marginBottom: 15 },
-  imageContainer: 
-  { marginRight: 20, 
-    position: 'relative' },
-  image: 
-  { width: 120, 
-    height: 120, 
-    borderRadius: 10, 
-    margin: 5, borderWidth: 1, 
-    borderColor: '#ddd' },
-  imageOverlay: 
-  {
-    position: 'absolute', 
-    top: 0, 
-    left: 0, 
-    right: 0, 
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)', 
-    justifyContent: 'center', 
-    alignItems: 'center', 
+  iconContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: 90,
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 150,
+    backgroundColor: '#fff',
+  },
+  captionInput: {
+    marginBottom: 15,
+    padding: 10,
+    fontSize: 16,
+    backgroundColor: '#f8f8f8',
     borderRadius: 10,
   },
-  imageOverlayText: 
-  { color: '#fff', 
-    fontSize: 14, 
-    fontWeight: 'bold' },
-  locationRow: 
-  { flexDirection: 'row', 
-    alignItems: 'center', 
-    marginTop: 10 },
-  locationIcon: 
-  { width: 24, 
-    height: 24, 
-    marginRight: 10 },
-  addLocation: 
-  { fontSize: 16, 
-    color: '#333' },
-  routeButton: 
-  { marginTop: 10, 
-    backgroundColor: '#4CAF50', 
-    padding: 10, 
-    borderRadius: 10, 
-    alignItems: 'center' },
-  routeButtonText: 
-  { color: '#fff', 
-    fontWeight: 'bold' },
-  buttonContainer: 
-  { flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    marginTop: 30 },
-  cancelButton: 
-  {
-    flex: 1, 
-    backgroundColor: '#ededed', 
+  imageList: {
+    marginTop: 20,
+    marginBottom: 15,
+  },
+  imageContainer: {
+    marginRight: 20,
+    position: 'relative',
+  },
+  image: {
+    width: 120,
+    height: 120,
+    borderRadius: 10,
+    margin: 5,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  imageOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 10,
+  },
+  imageOverlayText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  locationIcon: {
+    width: 24,
+    height: 24,
+    marginRight: 10,
+  },
+  addLocation: {
+    fontSize: 16,
+    color: '#333',
+  },
+  routeButton: {
+    marginTop: 10,
+    backgroundColor: '#4CAF50',
+    padding: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  routeButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 30,
+  },
+  cancelButton: {
+    flex: 1,
+    backgroundColor: '#ededed',
     marginRight: 10,
     padding: 15,
-     alignItems: 'center', 
-     borderRadius: 10,
-  },
-  confirmButton: {
-    flex: 1, 
-    backgroundColor: '#B7E305', 
-    marginLeft: 10,
-    padding: 15, 
-    alignItems: 'center', 
+    alignItems: 'center',
     borderRadius: 10,
   },
-  buttonText: 
-  { fontSize: 16, 
-    fontWeight: 'bold' },
-  postTypeButton: 
-  {
-    paddingVertical: 8, 
+  confirmButton: {
+    flex: 1,
+    backgroundColor: '#B7E305',
+    marginLeft: 10,
+    padding: 15,
+    alignItems: 'center',
+    borderRadius: 10,
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  postTypeButton: {
+    paddingVertical: 8,
     paddingHorizontal: 20,
-    backgroundColor: '#E0E0E0', 
+    backgroundColor: '#E0E0E0',
     borderRadius: 20,
     marginHorizontal: 10,
   },
@@ -376,7 +415,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#B7E305',
   },
   postTypeText: {
-    fontWeight: 'bold', color: '#555',
+    fontWeight: 'bold',
+    color: '#555',
   },
   postTypeTextActive: {
     color: '#000',

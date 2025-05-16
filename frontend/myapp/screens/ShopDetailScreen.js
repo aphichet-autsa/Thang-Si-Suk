@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, Image, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../config/firebase-config';
 
 export default function ShopDetailScreen() {
@@ -13,9 +13,12 @@ export default function ShopDetailScreen() {
   useEffect(() => {
     const fetchShop = async () => {
       try {
-        const docRef = doc(db, 'shops', shopId);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
+        // ค้นหาเอกสารที่มี field 'id' เท่ากับ shopId (ซึ่งเป็น string ต้องแปลงเป็น number)
+        const q = query(collection(db, 'shops'), where('id', '==', Number(shopId)));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          // สมมติเจอแค่ 1 ร้าน
+          const docSnap = querySnapshot.docs[0];
           setShop(docSnap.data());
         } else {
           console.warn('ไม่พบข้อมูลร้าน');
