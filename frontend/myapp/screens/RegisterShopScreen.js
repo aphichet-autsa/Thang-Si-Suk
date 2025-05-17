@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, Image, ScrollView, StyleSheet,
 import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
-import { addDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, setDoc, doc } from 'firebase/firestore';
 import { db } from '../config/firebase-config';
 import { useRouter } from 'expo-router';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -147,92 +147,97 @@ export default function RegisterShopScreen() {
   };
 
   // อัปโหลดรูปขึ้น Cloudinary และบันทึกข้อมูลร้านค้าใน Firestore พร้อมสร้าง id อัตโนมัติ
-  const handleUpload = async () => {
-    if (!profileImageUri || shopImageUris.length === 0) {
-      alert("กรุณาเลือกรูปภาพทั้งสองอัน");
-      return;
-    }
+const handleUpload = async () => {
+  if (!profileImageUri || shopImageUris.length === 0) {
+    alert("กรุณาเลือกรูปภาพทั้งสองอัน");
+    return;
+  }
 
-    const auth = getAuth();
-    const currentUser = auth.currentUser;
+  const auth = getAuth();
+  const currentUser = auth.currentUser;
 
-    if (!currentUser) {
-      Alert.alert("กรุณาเข้าสู่ระบบก่อนทำการสมัครร้านค้า");
-      return;
-    }
+  if (!currentUser) {
+    Alert.alert("กรุณาเข้าสู่ระบบก่อนทำการสมัครร้านค้า");
+    return;
+  }
 
-    const uid = currentUser.uid;
+  const uid = currentUser.uid;
 
-    setUploading(true);
-    try {
-      const uploadToCloudinary = async (uri) => {
-        const formData = new FormData();
-        const filename = uri.split('/').pop();
-        const fileType = filename.split('.').pop();
+  setUploading(true);
+  try {
+    const uploadToCloudinary = async (uri) => {
+      const formData = new FormData();
+      const filename = uri.split('/').pop();
+      const fileType = filename.split('.').pop();
 
-        formData.append('file', {
-          uri,
-          name: filename,
-          type: `image/${fileType}`,
-        });
-        formData.append('upload_preset', 'shop123');
-
-        const response = await axios.post(
-          'https://api.cloudinary.com/v1_1/dd0ro6iov/image/upload',
-          formData,
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-          }
-        );
-        return response.data.secure_url;
-      };
-
-      const profileImageUrl = await uploadToCloudinary(profileImageUri);
-      const shopImageUrls = await Promise.all(shopImageUris.map(uri => uploadToCloudinary(uri)));
-
-      // หา max id ปัจจุบันใน shops
-      const shopsSnapshot = await getDocs(collection(db, 'shops'));
-      let maxId = 0;
-      shopsSnapshot.forEach(doc => {
-        const data = doc.data();
-        if (data.id && data.id > maxId) maxId = data.id;
+      formData.append('file', {
+        uri,
+        name: filename,
+        type: `image/${fileType}`,
       });
-      const newId = maxId + 1;
+      formData.append('upload_preset', 'shop123');
 
-      await addDoc(collection(db, 'shops'), {
-        id: newId,  // เพิ่ม id ที่นี่
-        uid,
-        shopName,
-        ownerName,
-        address,
-        district,
-        amphoe,
-        province,
-        zipcode,
-        phone,
-        category,
-        detail,
-        pinAddress,
-        coords: location?.coords ? {
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-        } : null,
-        profileImageUrl,
-        shopImageUrls,
-        createdAt: new Date()
-      });
+      const response = await axios.post(
+        'https://api.cloudinary.com/v1_1/dd0ro6iov/image/upload',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+      return response.data.secure_url;
+    };
 
-      Alert.alert('สมัครร้านค้าสำเร็จ');
-      router.push('/shop');
-    } catch (error) {
-      Alert.alert('การสมัครร้านค้าล้มเหลว');
-      console.error(error);
-    } finally {
-      setUploading(false);
-    }
-  };
+    const profileImageUrl = await uploadToCloudinary(profileImageUri);
+    const shopImageUrls = await Promise.all(shopImageUris.map(uri => uploadToCloudinary(uri)));
+
+    // ✅ หา max id ที่มีอยู่แล้วใน Firestore
+    const shopsSnapshot = await getDocs(collection(db, 'shops'));
+    let maxId = 0;
+    shopsSnapshot.forEach(docSnap => {
+      const data = docSnap.data();
+      if (data.id && data.id > maxId) maxId = data.id;
+    });
+    const newId = maxId + 1;
+
+    // ✅ สร้างชื่อ Document เป็น shop1, shop2, ...
+    const shopId = `shop${newId}`;
+    const shopRef = doc(db, 'shops', shopId); // <--- ใช้ setDoc แทน addDoc
+
+    await setDoc(shopRef, {
+      id: newId,
+      uid,
+      shopName,
+      ownerName,
+      address,
+      district,
+      amphoe,
+      province,
+      zipcode,
+      phone,
+      category,
+      detail,
+      pinAddress,
+      coords: location?.coords ? {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      } : null,
+      profileImageUrl,
+      shopImageUrls,
+      createdAt: new Date()
+    });
+
+    Alert.alert('สมัครร้านค้าสำเร็จ');
+    router.push('/shop');
+  } catch (error) {
+    Alert.alert('การสมัครร้านค้าล้มเหลว');
+    console.error(error);
+  } finally {
+    setUploading(false);
+  }
+};
+
 
   // ตรวจสอบฟิลด์ก่อนส่ง
   const handleSubmit = () => {

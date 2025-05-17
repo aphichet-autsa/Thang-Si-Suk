@@ -90,97 +90,101 @@ export default function PostScreen() {
       Linking.openURL(url);
     }
   };
-
-  const uploadImagesAndSavePost = async () => {
-    setUploading(true); // เริ่มอัปโหลดตั้งสถานะ uploading = true
-    try {
-      if (!caption || images.length === 0) {
-        Alert.alert('กรุณาใส่คำบรรยายและเลือกรูปอย่างน้อย 1 รูป');
-        setUploading(false);
-        return;
-      }
-
-      const auth = getAuth();
-      const currentUser = auth.currentUser;
-      if (!currentUser) {
-        Alert.alert('กรุณาเข้าสู่ระบบก่อนโพสต์');
-        setUploading(false);
-        return;
-      }
-
-      const uid = currentUser.uid;
-
-      const userRef = doc(db, 'users', uid);
-      const userSnap = await getDoc(userRef);
-      const userData = userSnap.exists() ? userSnap.data() : {};
-      const ownerName = userData.name || '';
-
-      // อัปโหลดรูปภาพไป Cloudinary
-      const uploadedUrls = [];
-      for (const uri of images) {
-        const formData = new FormData();
-        const filename = uri.split('/').pop();
-        const fileType = filename.split('.').pop();
-        formData.append('file', {
-          uri,
-          name: filename,
-          type: `image/${fileType}`,
-        });
-        formData.append('upload_preset', 'postuser');
-
-        const response = await axios.post('https://api.cloudinary.com/v1_1/dd0ro6iov/image/upload', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
-        uploadedUrls.push(response.data.secure_url);
-      }
-
-      const postCollectionName = postType === 'donate' ? 'PostDonate' : 'PostSale';
-      const postCollection = collection(db, postCollectionName);
-
-      // นับจำนวนโพสต์ใน collection นี้
-      const q = query(postCollection);
-      const querySnapshot = await getDocs(q);
-      const count = querySnapshot.size;
-
-      // สร้าง postId เป็น B1, B2,... หรือ D1, D2,...
-      const prefix = postType === 'donate' ? 'D' : 'B';
-      const postId = prefix + (count + 1);
-
-      // สร้าง doc ref ใหม่
-      const newDocRef = doc(postCollection);
-
-      const postData = {
-        postId,
-        caption,
-        imageUrls: uploadedUrls,
-        address,
-        coords: coords || null,
-        type: postType,
-        uid,
-        ownerName,
-        createdAt: serverTimestamp(),
-      };
-
-      await setDoc(newDocRef, postData);
-
-      Alert.alert('โพสต์สำเร็จ!');
-      setCaption('');
-      setImages([]);
-      setAddress('');
-      setCoords(null);
-
-      if (postType === 'buy') {
-        navigation.navigate('lookpost');
-      } else if (postType === 'donate') {
-        navigation.navigate('donate');
-      }
-    } catch (error) {
-      console.error('Post error:', error);
-      Alert.alert('เกิดข้อผิดพลาดในการโพสต์');
-    } finally {
-      setUploading(false); // เสร็จแล้วตั้งสถานะ uploading = false
+  
+const uploadImagesAndSavePost = async () => {
+  setUploading(true);
+  try {
+    if (!caption || images.length === 0) {
+      Alert.alert('กรุณาใส่คำบรรยายและเลือกรูปอย่างน้อย 1 รูป');
+      setUploading(false);
+      return;
     }
-  };
+
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      Alert.alert('กรุณาเข้าสู่ระบบก่อนโพสต์');
+      setUploading(false);
+      return;
+    }
+
+    const uid = currentUser.uid;
+
+    const userRef = doc(db, 'users', uid);
+    const userSnap = await getDoc(userRef);
+    const userData = userSnap.exists() ? userSnap.data() : {};
+    const ownerName = userData.name || '';
+
+    // อัปโหลดรูปภาพไป Cloudinary
+    const uploadedUrls = [];
+    for (const uri of images) {
+      const formData = new FormData();
+      const filename = uri.split('/').pop();
+      const fileType = filename.split('.').pop();
+      formData.append('file', {
+        uri,
+        name: filename,
+        type: `image/${fileType}`,
+      });
+      formData.append('upload_preset', 'postuser');
+
+      const response = await axios.post(
+        'https://api.cloudinary.com/v1_1/dd0ro6iov/image/upload',
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      );
+      uploadedUrls.push(response.data.secure_url);
+    }
+
+    // ✅ แยก collection ตามประเภทโพสต์
+    const postCollectionName = postType === 'donate' ? 'PostDonate' : 'PostSale';
+    const postCollection = collection(db, postCollectionName);
+
+    // ✅ นับจำนวนเอกสารใน collection นี้
+    const q = query(postCollection);
+    const querySnapshot = await getDocs(q);
+    const count = querySnapshot.size;
+
+    // ✅ สร้างชื่อเอกสาร: PostProductDonateX หรือ PostProductSaleX
+    const prefix = postType === 'donate' ? 'PostProductDonate' : 'PostProductSale';
+    const postId = `${prefix}${count + 1}`;
+
+    // ✅ สร้าง document ด้วยชื่อกำหนดเอง
+    const newDocRef = doc(db, postCollectionName, postId);
+
+    const postData = {
+      postId,
+      caption,
+      imageUrls: uploadedUrls,
+      address,
+      coords: coords || null,
+      type: postType,
+      uid,
+      ownerName,
+      createdAt: serverTimestamp(),
+    };
+
+    await setDoc(newDocRef, postData);
+
+    Alert.alert('โพสต์สำเร็จ!');
+    setCaption('');
+    setImages([]);
+    setAddress('');
+    setCoords(null);
+
+    // ✅ นำทางกลับหน้ารวมโพสต์
+    if (postType === 'buy') {
+      navigation.navigate('lookpost');
+    } else if (postType === 'donate') {
+      navigation.navigate('donate');
+    }
+  } catch (error) {
+    console.error('Post error:', error);
+    Alert.alert('เกิดข้อผิดพลาดในการโพสต์');
+  } finally {
+    setUploading(false);
+  }
+};
 
   const renderImageItem = ({ item, index }) => (
     <TouchableOpacity

@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { auth, db } from '../config/firebase-config';
-import { collection, getDoc, getDocs, doc, setDoc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc } from 'firebase/firestore';
 
 function ContractScreen() {
   const router = useRouter();
@@ -38,9 +38,6 @@ function ContractScreen() {
         return;
       }
 
-      const userRef = doc(db, 'users', user.uid);
-      const docSnap = await getDoc(userRef);
-
       const updateData = {
         email: user.email,
         facebook: facebookName,
@@ -56,23 +53,32 @@ function ContractScreen() {
         uid: user.uid,
       };
 
-      if (docSnap.exists()) {
-        await updateDoc(userRef, updateData);
+      const usersCol = collection(db, 'users');
+      const snapshot = await getDocs(usersCol);
+
+      let maxId = 0;
+      let existingDocId = null;
+
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        if (data.uid === user.uid) {
+          existingDocId = docSnap.id;
+        }
+        if (data.id && data.id > maxId) {
+          maxId = data.id;
+        }
+      });
+
+      if (existingDocId) {
+        // ถ้ามีอยู่แล้ว ไม่สร้างใหม่ แค่ update
+        const userRef = doc(db, 'users', existingDocId);
+        await setDoc(userRef, updateData);
       } else {
-        const usersCol = collection(db, 'users');
-        const snapshot = await getDocs(usersCol);
-
-        let maxId = 0;
-        snapshot.forEach((doc) => {
-          const data = doc.data();
-          if (data.id && data.id > maxId) {
-            maxId = data.id;
-          }
-        });
-
         const nextId = maxId + 1;
+        const userDocId = `user${nextId}`;
         updateData.id = nextId;
 
+        const userRef = doc(db, 'users', userDocId);
         await setDoc(userRef, updateData);
       }
 

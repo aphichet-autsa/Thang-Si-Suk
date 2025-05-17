@@ -30,7 +30,13 @@ export default function UserListPage() {
     const confirmDelete = window.confirm('คุณต้องการลบผู้ใช้นี้หรือไม่?');
     if (!confirmDelete) return;
     try {
-      await deleteDoc(doc(db, "users", uid));
+      const usersCollection = collection(db, "users");
+      const snapshot = await getDocs(usersCollection);
+      snapshot.forEach(async (docSnap) => {
+        if (docSnap.data().uid === uid) {
+          await deleteDoc(doc(db, "users", docSnap.id));
+        }
+      });
       setUsers(users.filter((user) => user.uid !== uid));
       alert('ลบสำเร็จแล้ว');
     } catch (error) {
@@ -61,7 +67,6 @@ export default function UserListPage() {
       <div style={{ padding: '40px', backgroundColor: '#f2f2f2', borderRadius: '10px' }}>
         <h1 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '20px' }}>ผู้ใช้ในระบบ</h1>
 
-        {/* Search Bar */}
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
           <input
             type="text"
@@ -72,7 +77,6 @@ export default function UserListPage() {
           />
         </div>
 
-        {/* Table */}
         <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: 'white', fontSize: '14px' }}>
           <thead style={{ backgroundColor: '#f0f0f0' }}>
             <tr>
@@ -107,7 +111,6 @@ export default function UserListPage() {
           </tbody>
         </table>
 
-        {/* Modal */}
         {editingUser && (
           <EditUserModal
             user={editingUser}
@@ -120,7 +123,6 @@ export default function UserListPage() {
   );
 }
 
-/* Modal Component */
 function EditUserModal({ user, onClose, onSave }) {
   const [formData, setFormData] = useState(user);
 
@@ -176,7 +178,6 @@ function EditUserModal({ user, onClose, onSave }) {
   );
 }
 
-/* Styles */
 const thStyle = {
   padding: '10px',
   borderBottom: '1px solid #ddd',
