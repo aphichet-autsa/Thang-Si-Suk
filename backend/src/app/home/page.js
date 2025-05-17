@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { db } from "@/firebase";
-import { collection, getDocs, addDoc, deleteDoc, doc } from "firebase/firestore";
+import { collection, getDocs, deleteDoc, doc, setDoc } from "firebase/firestore";
 import axios from "axios";
 import { MainLayout } from "../components/layout/MainLayout";
 
@@ -34,20 +34,27 @@ export default function HomePage() {
       );
 
       const url = res.data.secure_url;
-      await addDoc(collection(db, "knowledges"), {
+
+      // หาจำนวนของตำแหน่งปัจจุบันเพื่อตั้งชื่อ doc เช่น top1, bottom3
+      const querySnapshot = await getDocs(collection(db, "knowledges"));
+      const filtered = querySnapshot.docs.filter(d => d.data().position === position);
+      const docId = `${position}${filtered.length + 1}`;
+
+      await setDoc(doc(db, "knowledges", docId), {
         imageUrl: url,
         position,
       });
+
       alert("อัปโหลดสำเร็จ");
       fetchKnowledges();
     } catch (error) {
       alert("อัปโหลดล้มเหลว");
+      console.error(error);
     }
   };
 
   const handleDelete = async (id) => {
-    const docRef = doc(db, "knowledges", id);
-    await deleteDoc(docRef);
+    await deleteDoc(doc(db, "knowledges", id));
     fetchKnowledges();
   };
 
@@ -58,7 +65,6 @@ export default function HomePage() {
       {/* ================= Banner Section ================= */}
       <h2 style={{ marginTop: 30 }}>ภาพแถวบน (Banner)</h2>
       <div style={imageContainer}>
-        {/* ปุ่มเพิ่มรูป Banner */}
         <div style={imageBox}>
           <label style={iconButton}>
             ➕
@@ -66,7 +72,6 @@ export default function HomePage() {
           </label>
         </div>
 
-        {/* แสดงรูป Banner */}
         {knowledges
           .filter(item => item.position === 'top')
           .map(item => (
@@ -82,7 +87,6 @@ export default function HomePage() {
       {/* ================= Infographic Section ================= */}
       <h2 style={{ marginTop: 30 }}>ภาพแถวล่าง (Infographic)</h2>
       <div style={imageContainer}>
-        {/* ปุ่มเพิ่มรูป Infographic */}
         <div style={imageBox}>
           <label style={iconButton}>
             ➕
@@ -90,7 +94,6 @@ export default function HomePage() {
           </label>
         </div>
 
-        {/* แสดงรูป Infographic */}
         {knowledges
           .filter(item => item.position === 'bottom')
           .map(item => (
