@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { auth, db } from "@/firebase";
+import { db } from "@/firebase";
 import { collection, getDocs, Timestamp } from 'firebase/firestore';
 import { MainLayout } from "../components/layout/MainLayout";
 import ShopCard from "../components/layout/ShopCard";
@@ -25,17 +25,21 @@ export default function ShopListPage() {
       const shopList = querySnapshot.docs.map(doc => {
         const data = doc.data();
 
-        const createdAt = data.createdAt instanceof Timestamp
-          ? data.createdAt.toDate().toLocaleString()
-          : '';
+        const createdAt =
+          data.createdAt instanceof Timestamp
+            ? data.createdAt.toDate().toLocaleString()
+            : typeof data.createdAt === 'string'
+              ? data.createdAt
+              : '';
 
         return {
-          id: doc.id,
-          shopName: data.shopName || '', // ป้องกัน undefined
-          ...data,
-          createdAt,
+          docId: doc.id, // ✅ เปลี่ยนจาก id: doc.id เป็น docId
+          shopName: data.shopName || '',
+          ...data, // รวม field ที่เหลือ เช่น ownerName, phone, image ฯลฯ
+          createdAt, // override createdAt เพื่อไม่ render object
         };
       });
+
       setState(prev => ({ ...prev, shops: shopList }));
     } catch (error) {
       console.error("Error fetching shops:", error);
@@ -48,13 +52,18 @@ export default function ShopListPage() {
   };
 
   const filteredShops = state.shops.filter(shop =>
-    shop.shopName?.toLowerCase().includes(state.searchTerm.toLowerCase())
+    (shop.shopName || '').toLowerCase().includes(state.searchTerm.toLowerCase())
   );
 
   return (
     <MainLayout activeMenu="shop">
       <div style={{ padding: '30px', width: '100%' }}>
-        <h1 style={{ color: '#333', marginBottom: '30px', fontSize: '24px', fontWeight: 'bold' }}>
+        <h1 style={{
+          color: '#333',
+          marginBottom: '30px',
+          fontSize: '24px',
+          fontWeight: 'bold'
+        }}>
           ร้านค้าในระบบ
         </h1>
 
@@ -100,7 +109,7 @@ export default function ShopListPage() {
           ) : (
             filteredShops.map((shop) => (
               <ShopCard
-                key={shop.id}
+                key={shop.docId} // ✅ ใช้ docId เป็น key
                 shop={shop}
                 fetchShops={fetchShops}
               />
