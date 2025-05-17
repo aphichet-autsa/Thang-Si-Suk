@@ -11,24 +11,28 @@ export default function ShopCard({ shop, fetchShops }) {
   const handleDelete = async () => {
     if (!window.confirm("คุณแน่ใจว่าต้องการลบร้านค้านี้?")) return;
     try {
-      await deleteDoc(doc(db, 'shops', shop.id));
+      if (!shop.docId) throw new Error('ไม่พบ docId');
+      await deleteDoc(doc(db, 'shops', shop.docId));
       alert("ลบร้านค้าเรียบร้อย");
       fetchShops();
     } catch (err) {
+      console.error(err);
       alert("เกิดข้อผิดพลาดในการลบ");
     }
   };
 
   const handleUpdate = async () => {
     try {
+      if (!shop.docId) throw new Error('ไม่พบ docId');
       const cleanFormData = Object.fromEntries(
         Object.entries(formData).filter(([_, v]) => v !== undefined && v !== null)
       );
-      await updateDoc(doc(db, 'shops', shop.id), cleanFormData);
+      await updateDoc(doc(db, 'shops', shop.docId), cleanFormData);
       alert("อัปเดตร้านค้าเรียบร้อย");
       setShowModal(false);
       fetchShops();
     } catch (err) {
+      console.error(err);
       alert("อัปเดตล้มเหลว");
     }
   };
@@ -36,7 +40,6 @@ export default function ShopCard({ shop, fetchShops }) {
   return (
     <>
       <div style={cardStyle}>
-        {/* ✅ รูปภาพร้านหลัก */}
         <img
           src={shop.profileImageUrl || "https://cdn-icons-png.flaticon.com/512/149/149071.png"}
           alt="รูปภาพร้าน"
@@ -49,7 +52,6 @@ export default function ShopCard({ shop, fetchShops }) {
           }}
         />
 
-        {/* ✅ แสดงภาพสินค้าทั้งหมด */}
         {Array.isArray(shop.shopImageUrls) && shop.shopImageUrls.length > 0 && (
           <div style={{
             display: 'flex',
@@ -74,7 +76,6 @@ export default function ShopCard({ shop, fetchShops }) {
           </div>
         )}
 
-        {/* ✅ ข้อมูลร้าน */}
         <p><strong>ชื่อร้าน:</strong> {shop.shopName}</p>
         <p><strong>เจ้าของ:</strong> {shop.ownerName}</p>
         <p><strong>ที่อยู่:</strong> {shop.address}</p>
@@ -85,7 +86,7 @@ export default function ShopCard({ shop, fetchShops }) {
         <p><strong>เบอร์โทร:</strong> {shop.phone}</p>
         <p><strong>PIN ที่อยู่:</strong> {shop.pinAddress}</p>
         <p><strong>รายละเอียด:</strong> {shop.detail}</p>
-        <p><strong>วันที่สร้าง:</strong> {shop.createdAt}</p>
+        <p><strong>วันที่สร้าง:</strong> {typeof shop.createdAt === 'string' ? shop.createdAt : 'ไม่ทราบเวลา'}</p>
 
         <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
           <button style={btnStyle('#4CAF50')} onClick={() => setShowModal(true)}>แก้ไข</button>
@@ -93,7 +94,6 @@ export default function ShopCard({ shop, fetchShops }) {
         </div>
       </div>
 
-      {/* ✅ Modal แก้ไข */}
       {showModal && (
         <div style={modalOverlay}>
           <div style={modalBox}>
@@ -120,7 +120,7 @@ export default function ShopCard({ shop, fetchShops }) {
   );
 }
 
-// 🔧 Style และ Label
+// สไตล์และ Label
 const labelMap = {
   shopName: 'ชื่อร้าน',
   ownerName: 'เจ้าของ',

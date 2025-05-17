@@ -36,15 +36,18 @@ export default function HomeScreen() {
   };
 
   if (loading) {
-    return <Text>กำลังโหลด...</Text>;
+    return <Text style={{ padding: 20 }}>กำลังโหลด...</Text>;
   }
 
   return (
     <ImageBackground style={styles.background} resizeMode="cover">
       <View style={styles.wrapper}>
-        <ScrollView contentContainerStyle={styles.container}>
-          <Header />
+        {/* ✅ Header อยู่คงที่ด้านบน */}
+        <Header />
 
+        {/* ✅ เนื้อหาหลักสามารถ scroll ได้ */}
+        <ScrollView contentContainerStyle={styles.container}>
+          {/* รูปแนวนอนด้านบน */}
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -62,14 +65,13 @@ export default function HomeScreen() {
                       resizeMode="cover"
                     />
                   ) : (
-                    <Text style={styles.noImageText}>
-                      Image not available
-                    </Text>
+                    <Text style={styles.noImageText}>Image not available</Text>
                   )}
                 </View>
               ))}
           </ScrollView>
 
+          {/* ปุ่มฟีเจอร์ */}
           <View style={styles.featureRow}>
             <FeatureButton
               title="ร้านรับซื้อ"
@@ -88,7 +90,8 @@ export default function HomeScreen() {
             />
           </View>
 
-          <ScrollView contentContainerStyle={styles.verticalScroll}>
+          {/* รูป infographic ด้านล่าง */}
+          <View style={styles.verticalScroll}>
             {images
               .filter((image) => image.position === "bottom")
               .map((image, index) => (
@@ -100,15 +103,14 @@ export default function HomeScreen() {
                       resizeMode="cover"
                     />
                   ) : (
-                    <Text style={styles.noImageText}>
-                      Image not available
-                    </Text>
+                    <Text style={styles.noImageText}>Image not available</Text>
                   )}
                 </View>
               ))}
-          </ScrollView>
+          </View>
         </ScrollView>
 
+        {/* ✅ BottomNav อยู่ล่างสุด */}
         <BottomNav />
       </View>
     </ImageBackground>
@@ -141,6 +143,7 @@ const styles = StyleSheet.create({
   verticalScroll: {
     marginBottom: 20,
     alignItems: "center",
+    paddingHorizontal: 15,
   },
   imageCardTop: {
     marginRight: 15,
@@ -152,13 +155,13 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   imageCardBottom: {
-    marginRight: 15,
-    width: 350,
+    marginBottom: 10,
+    width: "100%",
+    maxWidth: 350,
     height: 200,
     borderRadius: 12,
     overflow: "hidden",
     position: "relative",
-    marginBottom: 10,
   },
   imagePreviewTop: {
     width: "100%",
@@ -207,5 +210,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 14,
     color: "#777",
+    padding: 10,
   },
 });

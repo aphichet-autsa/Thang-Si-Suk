@@ -56,7 +56,7 @@ export default function HomePage() {
       <h1>ข้อมูลความรู้ในระบบ</h1>
 
       {/* ================= Banner Section ================= */}
-      <h2 style={{ marginTop: 30 }}>📌 ภาพแถวบน (Banner)</h2>
+      <h2 style={{ marginTop: 30 }}>ภาพแถวบน (Banner)</h2>
       <div style={imageContainer}>
         {/* ปุ่มเพิ่มรูป Banner */}
         <div style={imageBox}>
@@ -80,7 +80,7 @@ export default function HomePage() {
       </div>
 
       {/* ================= Infographic Section ================= */}
-      <h2 style={{ marginTop: 30 }}>📌 ภาพแถวล่าง (Infographic)</h2>
+      <h2 style={{ marginTop: 30 }}>ภาพแถวล่าง (Infographic)</h2>
       <div style={imageContainer}>
         {/* ปุ่มเพิ่มรูป Infographic */}
         <div style={imageBox}>
