@@ -268,7 +268,7 @@ export default function PostScreen() {
               setCaption('');
               setImages([]);
               setAddress('');
-              setCoords(null); //
+              setCoords(null); 
             }}
           >
             <Text style={styles.buttonText}>ยกเลิก</Text>
