@@ -39,7 +39,7 @@ export default function ForgotPasswordScreen() {
       source={require('../assets/background.png')}
       style={styles.background}
       resizeMode="cover"
-      imageStyle={{ backgroundColor: '#BDF21D' }}
+      imageStyle={{ backgroundColor: '#B7E305' }}
     >
       <SafeAreaView style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.container}>
@@ -80,6 +80,7 @@ const styles = StyleSheet.create({
     paddingVertical: 60,
     paddingHorizontal: 20,
     flexGrow: 1,
+    
   },
   logo: { width: 120, height: 120, marginBottom: 10, alignSelf: 'center' },
   whiteBox: {
@@ -117,4 +118,5 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   buttonText: { color: '#000', fontSize: 18, fontWeight: 'bold', textAlign: 'center' },
+ 
 });
