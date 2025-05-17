@@ -58,56 +58,64 @@ export default function UserListPage() {
 
   return (
     <MainLayout activeMenu="users">
-      <h1>ผู้ใช้ในระบบ</h1>
+      <div style={{ padding: '40px', backgroundColor: '#f2f2f2', borderRadius: '10px' }}>
+        <h1 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '20px' }}>ผู้ใช้ในระบบ</h1>
 
-      {/* Search and Add User */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <input
-          type="text"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="ค้นหา..."
-          style={{ padding: '8px', width: '200px', borderRadius: '4px', border: '1px solid #ddd' }}
-        />
-      </div>
+        {/* Search Bar */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="ค้นหา..."
+            style={{ padding: '8px', width: '200px', borderRadius: '4px', border: '1px solid #ddd' }}
+          />
+        </div>
 
-      {/* Table */}
-      <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: 'white', marginTop: '20px', fontSize: '14px' }}>
-        <thead style={{ backgroundColor: '#f0f0f0' }}>
-          <tr>
-            <th style={thStyle}>ไอดี</th>
-            <th style={thStyle}>ชื่อ</th>
-            <th style={thStyle}>อีเมล</th>
-            <th style={thStyle}>รหัสผ่าน</th>
-            <th style={thStyle}>Facebook</th>
-            <th style={thStyle}>Instagram</th>
-            <th style={thStyle}>Line</th>
-            <th style={thStyle}>เบอร์โทร</th>
-            <th style={thStyle}>สถานะ</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredUsers.map((user) => (
-            <tr key={user.uid}>
-              <td style={tdStyle}>{user.id}</td>
-              <td style={tdStyle}>{user.name}</td>
-              <td style={tdStyle}>{user.email}</td>
-              <td style={tdStyle}>{user.password}</td>
-              <td style={tdStyle}>{user.facebook}</td>
-              <td style={tdStyle}>{user.ig}</td>
-              <td style={tdStyle}>{user.idline}</td>
-              <td style={tdStyle}>{user.phoneNumber}</td>
-              <td style={tdStyle}>
-                <button style={editButtonStyle} onClick={() => setEditingUser(user)}>แก้ไข</button>
-                <button style={deleteButtonStyle} onClick={() => handleDelete(user.uid)}>ลบ</button>
-              </td>
+        {/* Table */}
+        <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: 'white', fontSize: '14px' }}>
+          <thead style={{ backgroundColor: '#f0f0f0' }}>
+            <tr>
+              <th style={thStyle}>ไอดี</th>
+              <th style={thStyle}>ชื่อ</th>
+              <th style={thStyle}>อีเมล</th>
+              <th style={thStyle}>รหัสผ่าน</th>
+              <th style={thStyle}>Facebook</th>
+              <th style={thStyle}>Instagram</th>
+              <th style={thStyle}>Line</th>
+              <th style={thStyle}>เบอร์โทร</th>
+              <th style={thStyle}>สถานะ</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {filteredUsers.map((user) => (
+              <tr key={user.uid}>
+                <td style={tdStyle}>{user.id}</td>
+                <td style={tdStyle}>{user.name}</td>
+                <td style={tdStyle}>{user.email}</td>
+                <td style={tdStyle}>{user.password}</td>
+                <td style={tdStyle}>{user.facebook}</td>
+                <td style={tdStyle}>{user.ig}</td>
+                <td style={tdStyle}>{user.idline}</td>
+                <td style={tdStyle}>{user.phoneNumber}</td>
+                <td style={tdStyle}>
+                  <button style={editButtonStyle} onClick={() => setEditingUser(user)}>แก้ไข</button>
+                  <button style={deleteButtonStyle} onClick={() => handleDelete(user.uid)}>ลบ</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
 
-      {/* Modal */}
-      {editingUser && <EditUserModal user={editingUser} onClose={() => setEditingUser(null)} onSave={handleSaveEdit} />}
+        {/* Modal */}
+        {editingUser && (
+          <EditUserModal
+            user={editingUser}
+            onClose={() => setEditingUser(null)}
+            onSave={handleSaveEdit}
+          />
+        )}
+      </div>
     </MainLayout>
   );
 }
@@ -169,71 +177,71 @@ function EditUserModal({ user, onClose, onSave }) {
 }
 
 /* Styles */
-const thStyle = { 
-  padding: '10px', 
-  borderBottom: '1px solid #ddd', 
-  fontWeight: 'bold' 
+const thStyle = {
+  padding: '10px',
+  borderBottom: '1px solid #ddd',
+  fontWeight: 'bold'
 };
 
-const tdStyle = { 
-  padding: '8px', 
-  borderBottom: '1px solid #ddd', 
-  textAlign: 'center' 
+const tdStyle = {
+  padding: '8px',
+  borderBottom: '1px solid #ddd',
+  textAlign: 'center'
 };
 
-const editButtonStyle = { 
-  backgroundColor: '#FFC107', 
-  border: 'none', 
-  padding: '5px 10px', 
-  borderRadius: '5px', 
-  marginRight: '5px', 
-  cursor: 'pointer' 
+const editButtonStyle = {
+  backgroundColor: '#FFC107',
+  border: 'none',
+  padding: '5px 10px',
+  borderRadius: '5px',
+  marginRight: '5px',
+  cursor: 'pointer'
 };
 
-const deleteButtonStyle = { 
-  backgroundColor: '#f44336', 
-  border: 'none', 
-  padding: '5px 10px', 
-  borderRadius: '5px', 
-  cursor: 'pointer', 
-  color: 'white' 
+const deleteButtonStyle = {
+  backgroundColor: '#f44336',
+  border: 'none',
+  padding: '5px 10px',
+  borderRadius: '5px',
+  cursor: 'pointer',
+  color: 'white'
 };
 
-const modalOverlay = { 
-  position: 'fixed', 
-  top: 0, 
-  left: 0, 
-  width: '100%', 
-  height: '100%', 
-  backgroundColor: 'rgba(0,0,0,0.5)', 
-  display: 'flex', 
-  justifyContent: 'center', 
-  alignItems: 'center', 
-  zIndex: 1000 
+const modalOverlay = {
+  position: 'fixed',
+  top: 0,
+  left: 0,
+  width: '100%',
+  height: '100%',
+  backgroundColor: 'rgba(0,0,0,0.5)',
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  zIndex: 1000
 };
 
-const modalContent = { 
-  backgroundColor: '#FFF9C4', 
-  padding: '30px', 
-  borderRadius: '10px', 
-  width: '400px' 
+const modalContent = {
+  backgroundColor: '#FFF9C4',
+  padding: '30px',
+  borderRadius: '10px',
+  width: '400px'
 };
 
-const cancelButtonStyle = { 
-  padding: '10px', 
-  borderRadius: '8px', 
-  backgroundColor: '#ddd', 
-  width: '45%', 
-  border: 'none', 
-  cursor: 'pointer' 
+const cancelButtonStyle = {
+  padding: '10px',
+  borderRadius: '8px',
+  backgroundColor: '#ddd',
+  width: '45%',
+  border: 'none',
+  cursor: 'pointer'
 };
 
-const confirmButtonStyle = { 
-  padding: '10px', 
-  borderRadius: '8px', 
-  backgroundColor: '#4CAF50', 
-  color: 'white', 
-  width: '45%', 
-  border: 'none', 
-  cursor: 'pointer' 
+const confirmButtonStyle = {
+  padding: '10px',
+  borderRadius: '8px',
+  backgroundColor: '#4CAF50',
+  color: 'white',
+  width: '45%',
+  border: 'none',
+  cursor: 'pointer'
 };
