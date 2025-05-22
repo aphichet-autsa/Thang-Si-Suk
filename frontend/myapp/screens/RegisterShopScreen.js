@@ -3,14 +3,14 @@ import { View, Text, TextInput, TouchableOpacity, Image, ScrollView, StyleSheet,
 import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
-import { collection, query, where, getDocs, setDoc, doc } from 'firebase/firestore';
+import { addDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../config/firebase-config';
 import { useRouter } from 'expo-router';
 import * as ImageManipulator from 'expo-image-manipulator';
 import Header from '../components/header';
 import { getAuth } from 'firebase/auth';
 
-const LOCATIONIQ_API_KEY = 'pk.8480f03915285ddcb4dbcc718b32297d';
+const LOCATIONIQ_API_KEY = 'pk.8480f03915285ddcb4dbcc718b32297d'; // Your LocationIQ API Key
 
 export default function RegisterShopScreen() {
   const router = useRouter();
@@ -31,46 +31,54 @@ export default function RegisterShopScreen() {
   const [uploading, setUploading] = useState(false);
   const [location, setLocation] = useState(null);
 
-  // เช็คว่าผู้ใช้สมัครร้านแล้วไหม
+  // Function to check if the user already has a shop
   useEffect(() => {
     const checkIfShopExists = async () => {
       const auth = getAuth();
       const currentUser = auth.currentUser;
       if (currentUser) {
         const uid = currentUser.uid;
+
+        // Query to check if the user already has a shop
         const q = query(collection(db, 'shops'), where('uid', '==', uid));
         const querySnapshot = await getDocs(q);
+
         if (!querySnapshot.empty) {
           Alert.alert('คุณได้สมัครร้านค้าไปแล้ว', 'คุณไม่สามารถสมัครร้านค้าใหม่ได้');
-          router.push('/shop');
+          router.push('/shop'); // Go to existing shop screen
         }
       }
     };
+
     checkIfShopExists();
   }, []);
 
-  // ฟังก์ชันดึงพิกัดจาก LocationIQ (ถ้าต้องการ)
+  // Function to fetch coordinates from LocationIQ API
   const fetchCoordsFromLocationIQ = async (address) => {
-    const encoded = encodeURIComponent(address);
-    const url = `https://us1.locationiq.com/v1/search.php?key=${LOCATIONIQ_API_KEY}&q=${encoded}&format=json`;
+  const encoded = encodeURIComponent(address);
+  const url = `https://us1.locationiq.com/v1/search.php?key=${LOCATIONIQ_API_KEY}&q=${encoded}&format=json`;
 
-    try {
-      const response = await axios.get(url);
+  try {
+    const response = await axios.get(url);
+    console.log('LocationIQ response status:', response.status);
+    console.log('LocationIQ response data:', response.data);
+
+    if (response.status === 200 && response.data.length > 0) {
       const result = response.data[0];
-      if (result) {
-        return {
-          latitude: parseFloat(result.lat),
-          longitude: parseFloat(result.lon),
-        };
-      }
-      return null;
-    } catch (error) {
-      console.error("❌ Error fetching from LocationIQ:", error.message);
-      return null;
+      return {
+        latitude: parseFloat(result.lat),
+        longitude: parseFloat(result.lon),
+      };
     }
-  };
+    return null;
+  } catch (error) {
+    console.error("Error fetching from LocationIQ:", error.response?.data || error.message);
+    return null;
+  }
+};
 
-  // ฟังก์ชันเลือกตำแหน่ง และแปลงเป็นชื่อสถานที่แบบอ่านง่าย (ไม่แสดง plus code)
+
+  // Function to pick location using the device
   const handleLocationPick = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
@@ -79,31 +87,18 @@ export default function RegisterShopScreen() {
     }
 
     try {
-      const locationResult = await Location.getCurrentPositionAsync({});
-      const coords = {
-        latitude: locationResult.coords.latitude,
-        longitude: locationResult.coords.longitude,
-      };
-      setLocation({ coords });
+      const location = await Location.getCurrentPositionAsync({});
+      const geocode = await Location.reverseGeocodeAsync(location.coords);
+      const place = geocode[0];
+      const fullAddress = `${place.name || ''} ${place.street || ''} ${place.district || ''} ${place.city || ''} ${place.region || ''}`.trim();
+      setPinAddress(fullAddress);
 
-      const geocode = await Location.reverseGeocodeAsync(coords);
-
-      if (geocode.length > 0) {
-        const place = geocode[0];
-        // ไม่ใช้ place.name เพราะอาจเป็น plus code
-        const parts = [
-          place.street,
-          place.subregion || place.district,
-          place.city,
-          place.region,
-          place.postalCode,
-        ];
-        // กรองค่าว่างและพวก plus code (ที่มีเครื่องหมาย +)
-        const filtered = parts.filter(part => part && !part.includes('+'));
-        const formattedAddress = filtered.join(', ');
-        setPinAddress(formattedAddress || 'ไม่พบชื่อสถานที่');
+      // Use LocationIQ to get coordinates from the address
+      const coords = await fetchCoordsFromLocationIQ(fullAddress);
+      if (coords) {
+        setPinAddress(fullAddress); // Set address after converting to coordinates
       } else {
-        setPinAddress('ไม่พบชื่อสถานที่');
+        console.warn("ไม่พบพิกัดจาก LocationIQ");
       }
     } catch (error) {
       alert('เกิดข้อผิดพลาดในการดึงตำแหน่ง');
@@ -111,7 +106,7 @@ export default function RegisterShopScreen() {
     }
   };
 
-  // เลือกรูปโปรไฟล์ หรือ รูปภาพร้าน
+  // Function to pick an image for profile or shop
   const handleImagePick = async (type) => {
     let permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
@@ -142,104 +137,88 @@ export default function RegisterShopScreen() {
     }
   };
 
+  // Function to remove shop images
   const handleRemoveShopImage = (indexToRemove) => {
     setShopImageUris(prev => prev.filter((_, index) => index !== indexToRemove));
   };
 
-  // อัปโหลดรูปขึ้น Cloudinary และบันทึกข้อมูลร้านค้าใน Firestore พร้อมสร้าง id อัตโนมัติ
-const handleUpload = async () => {
-  if (!profileImageUri || shopImageUris.length === 0) {
-    alert("กรุณาเลือกรูปภาพทั้งสองอัน");
-    return;
-  }
+  // Function to upload images to Cloudinary and add shop data to Firestore
+  const handleUpload = async () => {
+    if (!profileImageUri || shopImageUris.length === 0) {
+      alert("กรุณาเลือกรูปภาพทั้งสองอัน");
+      return;
+    }
 
-  const auth = getAuth();
-  const currentUser = auth.currentUser;
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
 
-  if (!currentUser) {
-    Alert.alert("กรุณาเข้าสู่ระบบก่อนทำการสมัครร้านค้า");
-    return;
-  }
+    if (!currentUser) {
+      Alert.alert("กรุณาเข้าสู่ระบบก่อนทำการสมัครร้านค้า");
+      return;
+    }
 
-  const uid = currentUser.uid;
+    const uid = currentUser.uid;
 
-  setUploading(true);
-  try {
-    const uploadToCloudinary = async (uri) => {
-      const formData = new FormData();
-      const filename = uri.split('/').pop();
-      const fileType = filename.split('.').pop();
+    setUploading(true);
+    try {
+      const uploadToCloudinary = async (uri) => {
+        const formData = new FormData();
+        const filename = uri.split('/').pop();
+        const fileType = filename.split('.').pop();
 
-      formData.append('file', {
-        uri,
-        name: filename,
-        type: `image/${fileType}`,
-      });
-      formData.append('upload_preset', 'shop123');
+        formData.append('file', {
+          uri,
+          name: filename,
+          type: `image/${fileType}`,
+        });
+        formData.append('upload_preset', 'shop123');
 
-      const response = await axios.post(
-        'https://api.cloudinary.com/v1_1/dd0ro6iov/image/upload',
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
-      return response.data.secure_url;
-    };
+        const response = await axios.post(
+          'https://api.cloudinary.com/v1_1/dd0ro6iov/image/upload',
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          }
+        );
+        return response.data.secure_url;
+      };
 
-    const profileImageUrl = await uploadToCloudinary(profileImageUri);
-    const shopImageUrls = await Promise.all(shopImageUris.map(uri => uploadToCloudinary(uri)));
+      const profileImageUrl = await uploadToCloudinary(profileImageUri);
+      const shopImageUrls = await Promise.all(shopImageUris.map(uri => uploadToCloudinary(uri)));
 
-    // ✅ หา max id ที่มีอยู่แล้วใน Firestore
-    const shopsSnapshot = await getDocs(collection(db, 'shops'));
+   const shopsSnapshot = await getDocs(collection(db, 'shops'));
     let maxId = 0;
-    shopsSnapshot.forEach(docSnap => {
-      const data = docSnap.data();
+    shopsSnapshot.forEach(doc => {
+      const data = doc.data();
       if (data.id && data.id > maxId) maxId = data.id;
     });
     const newId = maxId + 1;
 
-    // ✅ สร้างชื่อ Document เป็น shop1, shop2, ...
-    const shopId = `shop${newId}`;
-    const shopRef = doc(db, 'shops', shopId); // <--- ใช้ setDoc แทน addDoc
-
-    await setDoc(shopRef, {
-      id: newId,
-      uid,
-      shopName,
-      ownerName,
-      address,
-      district,
-      amphoe,
-      province,
-      zipcode,
-      phone,
-      category,
-      detail,
-      pinAddress,
+    await addDoc(collection(db, 'shops'), {
+      id: newId,  // <-- เพิ่ม id ที่สร้างใหม่
+      uid, shopName, ownerName, address, district, amphoe, province, zipcode,
+      phone, category, detail, pinAddress,
       coords: location?.coords ? {
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
       } : null,
-      profileImageUrl,
-      shopImageUrls,
+      profileImageUrl, shopImageUrls,
       createdAt: new Date()
     });
 
-    Alert.alert('สมัครร้านค้าสำเร็จ');
-    router.push('/shop');
-  } catch (error) {
-    Alert.alert('การสมัครร้านค้าล้มเหลว');
-    console.error(error);
-  } finally {
-    setUploading(false);
-  }
-};
+      Alert.alert('อัปโหลดรูปภาพสำเร็จ');
+      router.push('/shop');
+    } catch (error) {
+      Alert.alert('การอัปโหลดล้มเหลว');
+      console.error(error);
+    } finally {
+      setUploading(false);
+    }
+  };
 
-
-  // ตรวจสอบฟิลด์ก่อนส่ง
+  // Function to handle form submission
   const handleSubmit = () => {
     if (!shopName || !ownerName || !address || !pinAddress || !district || !amphoe || !province || !zipcode || !phone || !category || !detail) {
       alert('กรุณากรอกข้อมูลให้ครบ');
@@ -304,21 +283,14 @@ const handleUpload = async () => {
           </ScrollView>
         </View>
 
-      <View style={styles.buttonRow}>
+        <View style={styles.buttonRow}>
           <TouchableOpacity style={styles.cancelButton} onPress={() => router.back()}>
             <Text style={{ fontWeight: 'bold' }}>ยกเลิก</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.confirmButton, uploading && { opacity: 0.7 }]}
-            onPress={handleSubmit}
-            disabled={uploading}
-          >
-            <Text style={{ color: 'white', fontWeight: 'bold' }}>
-              {uploading ? 'กำลังสมัคร...' : 'ยืนยัน'}
-            </Text>
+          <TouchableOpacity style={styles.confirmButton} onPress={handleSubmit}>
+            <Text style={{ color: 'white', fontWeight: 'bold' }}>ยืนยัน</Text>
           </TouchableOpacity>
         </View>
-
       </ScrollView>
     </View>
   );
