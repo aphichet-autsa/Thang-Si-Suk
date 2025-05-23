@@ -50,8 +50,9 @@ const handleSubmit = async () => {
       name: user.displayName || '',
       password: passedPassword || '',
       phoneNumber: phone,
+      backupPhoneNumber: backupPhone,
       role: 'user',
-      uid: uid,
+      uid: uid, // ✅ ใช้เป็น documentId และเก็บไว้ในฟิลด์ด้วย
     };
 
     const usersCol = collection(db, 'users');
@@ -59,11 +60,11 @@ const handleSubmit = async () => {
 
     let maxId = 0;
 
-    // ✅ วนหา max user number เพื่อสร้าง id: userX
+    // ✅ วนหา max หมายเลขจาก id: "U1", "U2", ...
     snapshot.forEach(docSnap => {
       const data = docSnap.data();
-      if (data.id && typeof data.id === 'string' && data.id.startsWith("user")) {
-        const numberPart = parseInt(data.id.replace("user", ""));
+      if (data.id && typeof data.id === 'string' && data.id.startsWith("U")) {
+        const numberPart = parseInt(data.id.replace("U", ""));
         if (!isNaN(numberPart) && numberPart > maxId) {
           maxId = numberPart;
         }
@@ -76,7 +77,7 @@ const handleSubmit = async () => {
     const docExists = snapshot.docs.find(doc => doc.id === uid);
     if (!docExists) {
       // สร้าง id ใหม่เฉพาะตอนสมัครใหม่
-      updateData.id = `user${maxId + 1}`;
+      updateData.id = `U${maxId + 1}`;
     }
 
     await setDoc(userRef, updateData);
