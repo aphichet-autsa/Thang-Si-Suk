@@ -1,8 +1,6 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import { db } from "@/firebase";
-import { collection, getDocs, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { MainLayout } from "../components/layout/MainLayout";
 import Image from "next/image";
 
@@ -16,27 +14,20 @@ export default function UserListPage() {
   }, []);
 
   const fetchUsers = async () => {
-    const usersCollection = collection(db, "users");
-    const snapshot = await getDocs(usersCollection);
-    const usersData = snapshot.docs.map((docSnap, index) => ({
-      id: index + 1,
-      uid: docSnap.id,
-      ...docSnap.data()
-    }));
-    setUsers(usersData);
+    try {
+      const res = await fetch('/api/users');
+      const data = await res.json();
+      setUsers(data);
+    } catch (error) {
+      console.error("โหลดผู้ใช้ล้มเหลว:", error);
+    }
   };
 
   const handleDelete = async (uid) => {
     const confirmDelete = window.confirm('คุณต้องการลบผู้ใช้นี้หรือไม่?');
     if (!confirmDelete) return;
     try {
-      const usersCollection = collection(db, "users");
-      const snapshot = await getDocs(usersCollection);
-      snapshot.forEach(async (docSnap) => {
-        if (docSnap.data().uid === uid) {
-          await deleteDoc(doc(db, "users", docSnap.id));
-        }
-      });
+      await fetch(`/api/users/${uid}`, { method: 'DELETE' });
       setUsers(users.filter((user) => user.uid !== uid));
       alert('ลบสำเร็จแล้ว');
     } catch (error) {
@@ -47,7 +38,13 @@ export default function UserListPage() {
 
   const handleSaveEdit = async (newData) => {
     try {
-      await updateDoc(doc(db, "users", editingUser.uid), newData);
+      await fetch(`/api/users/${editingUser.uid}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newData)
+      });
       setEditingUser(null);
       fetchUsers();
       alert('แก้ไขข้อมูลสำเร็จ');

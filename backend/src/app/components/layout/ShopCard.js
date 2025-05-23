@@ -1,8 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { doc, deleteDoc, updateDoc } from 'firebase/firestore';
-import { db } from '@/firebase';
 
 export default function ShopCard({ shop, fetchShops }) {
   const [showModal, setShowModal] = useState(false);
@@ -11,10 +9,15 @@ export default function ShopCard({ shop, fetchShops }) {
   const handleDelete = async () => {
     if (!window.confirm("คุณแน่ใจว่าต้องการลบร้านค้านี้?")) return;
     try {
-      if (!shop.docId) throw new Error('ไม่พบ docId');
-      await deleteDoc(doc(db, 'shops', shop.docId));
-      alert("ลบร้านค้าเรียบร้อย");
-      fetchShops();
+      const res = await fetch(`/api/shops/${shop.docId}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        alert("ลบร้านค้าเรียบร้อย");
+        fetchShops();
+      } else {
+        alert("เกิดข้อผิดพลาดในการลบ");
+      }
     } catch (err) {
       console.error(err);
       alert("เกิดข้อผิดพลาดในการลบ");
@@ -23,14 +26,23 @@ export default function ShopCard({ shop, fetchShops }) {
 
   const handleUpdate = async () => {
     try {
-      if (!shop.docId) throw new Error('ไม่พบ docId');
       const cleanFormData = Object.fromEntries(
         Object.entries(formData).filter(([_, v]) => v !== undefined && v !== null)
       );
-      await updateDoc(doc(db, 'shops', shop.docId), cleanFormData);
-      alert("อัปเดตร้านค้าเรียบร้อย");
-      setShowModal(false);
-      fetchShops();
+      const res = await fetch(`/api/shops/${shop.docId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(cleanFormData)
+      });
+      if (res.ok) {
+        alert("อัปเดตร้านค้าเรียบร้อย");
+        setShowModal(false);
+        fetchShops();
+      } else {
+        alert("อัปเดตล้มเหลว");
+      }
     } catch (err) {
       console.error(err);
       alert("อัปเดตล้มเหลว");

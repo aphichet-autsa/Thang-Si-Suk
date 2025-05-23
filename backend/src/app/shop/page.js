@@ -2,8 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { db } from "@/firebase";
-import { collection, getDocs, Timestamp } from 'firebase/firestore';
 import { MainLayout } from "../components/layout/MainLayout";
 import ShopCard from "../components/layout/ShopCard";
 
@@ -21,28 +19,11 @@ export default function ShopListPage() {
 
   const fetchShops = async () => {
     try {
-      const querySnapshot = await getDocs(collection(db, 'shops'));
-      const shopList = querySnapshot.docs.map(doc => {
-        const data = doc.data();
-
-        const createdAt =
-          data.createdAt instanceof Timestamp
-            ? data.createdAt.toDate().toLocaleString()
-            : typeof data.createdAt === 'string'
-              ? data.createdAt
-              : '';
-
-        return {
-          docId: doc.id, // ✅ เปลี่ยนจาก id: doc.id เป็น docId
-          shopName: data.shopName || '',
-          ...data, // รวม field ที่เหลือ เช่น ownerName, phone, image ฯลฯ
-          createdAt, // override createdAt เพื่อไม่ render object
-        };
-      });
-
-      setState(prev => ({ ...prev, shops: shopList }));
+      const res = await fetch('/api/shops'); // ✅ ใช้ API route แทน Firestore
+      const data = await res.json();
+      setState(prev => ({ ...prev, shops: data }));
     } catch (error) {
-      console.error("Error fetching shops:", error);
+      console.error("โหลดร้านค้าไม่สำเร็จ:", error);
     }
   };
 
@@ -109,7 +90,7 @@ export default function ShopListPage() {
           ) : (
             filteredShops.map((shop) => (
               <ShopCard
-                key={shop.docId} // ✅ ใช้ docId เป็น key
+                key={shop.docId}
                 shop={shop}
                 fetchShops={fetchShops}
               />

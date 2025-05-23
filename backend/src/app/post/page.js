@@ -60,23 +60,52 @@ export default function AdminPostScreen() {
   };
 
   const handleDelete = async (id) => {
-    if (confirm('คุณต้องการลบโพสต์นี้ใช่หรือไม่?')) {
-      await deleteDoc(doc(db, activeTab, id));
-      setPosts((prev) => prev.filter((post) => post.id !== id));
+  if (confirm('คุณต้องการลบโพสต์นี้ใช่หรือไม่?')) {
+    try {
+      const res = await fetch(`/api/posts/${activeTab}/${id}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        setPosts((prev) => prev.filter((post) => post.id !== id));
+      } else {
+        alert('ลบโพสต์ไม่สำเร็จ');
+      }
+    } catch (error) {
+      console.error(error);
+      alert('เกิดข้อผิดพลาดในการลบโพสต์');
     }
-  };
+  }
+};
+
 
   const handleEdit = (post) => {
     setEditingPostId(post.id);
     setEditCaption(post.caption || '');
   };
 
-  const handleUpdate = async (id) => {
-    await updateDoc(doc(db, activeTab, id), { caption: editCaption });
-    setEditingPostId(null);
-    setEditCaption('');
-    fetchPosts();
-  };
+ const handleUpdate = async (id) => {
+  try {
+    const res = await fetch(`/api/posts/${activeTab}/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ caption: editCaption })
+    });
+
+    if (res.ok) {
+      setEditingPostId(null);
+      setEditCaption('');
+      fetchPosts();
+    } else {
+      alert('อัปเดตโพสต์ไม่สำเร็จ');
+    }
+  } catch (error) {
+    console.error(error);
+    alert('เกิดข้อผิดพลาดในการอัปเดตโพสต์');
+  }
+};
+
 
   const filteredPosts = posts.filter(post => {
     const lowerSearch = searchTerm.toLowerCase();

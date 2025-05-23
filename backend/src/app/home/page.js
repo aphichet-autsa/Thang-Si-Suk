@@ -1,8 +1,6 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import { db } from "@/firebase";
-import { collection, getDocs, deleteDoc, doc, setDoc } from "firebase/firestore";
 import axios from "axios";
 import { MainLayout } from "../components/layout/MainLayout";
 
@@ -14,9 +12,13 @@ export default function HomePage() {
   }, []);
 
   const fetchKnowledges = async () => {
-    const querySnapshot = await getDocs(collection(db, "knowledges"));
-    const data = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-    setKnowledges(data);
+    try {
+      const res = await fetch("/api/knowledges");
+      const data = await res.json();
+      setKnowledges(data);
+    } catch (err) {
+      console.error("โหลดข้อมูลล้มเหลว:", err);
+    }
   };
 
   const handleUpload = async (e, position = "top") => {
@@ -33,28 +35,24 @@ export default function HomePage() {
         formData
       );
 
-      const url = res.data.secure_url;
+      const imageUrl = res.data.secure_url;
 
-      // หาจำนวนของตำแหน่งปัจจุบันเพื่อตั้งชื่อ doc เช่น top1, bottom3
-      const querySnapshot = await getDocs(collection(db, "knowledges"));
-      const filtered = querySnapshot.docs.filter(d => d.data().position === position);
-      const docId = `${position}${filtered.length + 1}`;
-
-      await setDoc(doc(db, "knowledges", docId), {
-        imageUrl: url,
-        position,
+      await fetch("/api/knowledges", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageUrl, position })
       });
 
       alert("อัปโหลดสำเร็จ");
       fetchKnowledges();
     } catch (error) {
+      console.error("อัปโหลดล้มเหลว:", error);
       alert("อัปโหลดล้มเหลว");
-      console.error(error);
     }
   };
 
   const handleDelete = async (id) => {
-    await deleteDoc(doc(db, "knowledges", id));
+    await fetch(`/api/knowledges/${id}`, { method: "DELETE" });
     fetchKnowledges();
   };
 
@@ -62,7 +60,7 @@ export default function HomePage() {
     <MainLayout activeMenu="home">
       <h1>ข้อมูลความรู้ในระบบ</h1>
 
-      {/* ================= Banner Section ================= */}
+      {/* Banner Section */}
       <h2 style={{ marginTop: 30 }}>ภาพแถวบน (Banner)</h2>
       <div style={imageContainer}>
         <div style={imageBox}>
@@ -84,7 +82,7 @@ export default function HomePage() {
           ))}
       </div>
 
-      {/* ================= Infographic Section ================= */}
+      {/* Infographic Section */}
       <h2 style={{ marginTop: 30 }}>ภาพแถวล่าง (Infographic)</h2>
       <div style={imageContainer}>
         <div style={imageBox}>
@@ -109,8 +107,7 @@ export default function HomePage() {
   );
 }
 
-// ================= STYLE =================
-
+// Style objects
 const imageContainer = {
   display: "flex",
   flexDirection: "row",
