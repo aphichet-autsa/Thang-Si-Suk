@@ -21,74 +21,74 @@ function ContractScreen() {
   const [backupPhone, setBackupPhone] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
-  const handleSubmit = async () => {
-    const filled =
-      facebookName.trim() || facebookLink.trim() || lineId.trim() || lineLink.trim() ||
-      igName.trim() || igLink.trim() || phone.trim() || backupPhone.trim();
+const handleSubmit = async () => {
+  const filled =
+    facebookName.trim() || facebookLink.trim() || lineId.trim() || lineLink.trim() ||
+    igName.trim() || igLink.trim() || phone.trim() || backupPhone.trim();
 
-    if (!filled) {
-      setErrorMessage('⚠️ กรุณากรอกข้อมูลอย่างน้อย 1 ช่องก่อนกดยืนยัน');
+  if (!filled) {
+    setErrorMessage('⚠️ กรุณากรอกข้อมูลอย่างน้อย 1 ช่องก่อนกดยืนยัน');
+    return;
+  }
+
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      setErrorMessage('ยังไม่มีผู้ใช้ล็อกอิน');
       return;
     }
 
-    try {
-      const user = auth.currentUser;
-      if (!user) {
-        setErrorMessage('ยังไม่มีผู้ใช้ล็อกอิน');
-        return;
-      }
+    const uid = user.uid;
 
-      const updateData = {
-        email: user.email,
-        facebook: facebookName,
-        facebooklink: facebookLink,
-        idline: lineId,
-        ig: igName,
-        iglink: igLink,
-        name: user.displayName || '',
-        password: passedPassword || '',
-        phoneNumber: phone,
-        backupPhoneNumber: backupPhone,
-        role: 'user',
-        uid: user.uid,
-      };
+    const updateData = {
+      email: user.email,
+      facebook: facebookName,
+      facebooklink: facebookLink,
+      idline: lineId,
+      ig: igName,
+      iglink: igLink,
+      name: user.displayName || '',
+      password: passedPassword || '',
+      phoneNumber: phone,
+      role: 'user',
+      uid: uid,
+    };
 
-      const usersCol = collection(db, 'users');
-      const snapshot = await getDocs(usersCol);
+    const usersCol = collection(db, 'users');
+    const snapshot = await getDocs(usersCol);
 
-      let maxId = 0;
-      let existingDocId = null;
+    let maxId = 0;
 
-      snapshot.forEach(docSnap => {
-        const data = docSnap.data();
-        if (data.uid === user.uid) {
-          existingDocId = docSnap.id;
+    // ✅ วนหา max user number เพื่อสร้าง id: userX
+    snapshot.forEach(docSnap => {
+      const data = docSnap.data();
+      if (data.id && typeof data.id === 'string' && data.id.startsWith("user")) {
+        const numberPart = parseInt(data.id.replace("user", ""));
+        if (!isNaN(numberPart) && numberPart > maxId) {
+          maxId = numberPart;
         }
-        if (data.id && data.id > maxId) {
-          maxId = data.id;
-        }
-      });
-
-      if (existingDocId) {
-        // ถ้ามีอยู่แล้ว ไม่สร้างใหม่ แค่ update
-        const userRef = doc(db, 'users', existingDocId);
-        await setDoc(userRef, updateData);
-      } else {
-        const nextId = maxId + 1;
-        const userDocId = `user${nextId}`;
-        updateData.id = nextId;
-
-        const userRef = doc(db, 'users', userDocId);
-        await setDoc(userRef, updateData);
       }
+    });
 
-      setErrorMessage('');
-      router.replace('/login');
-    } catch (error) {
-      console.error('เกิดข้อผิดพลาด:', error);
-      setErrorMessage('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+    const userRef = doc(db, 'users', uid); // ✅ ใช้ uid เป็น documentId
+
+    // ✅ เช็กว่ามี document นี้อยู่แล้วหรือไม่
+    const docExists = snapshot.docs.find(doc => doc.id === uid);
+    if (!docExists) {
+      // สร้าง id ใหม่เฉพาะตอนสมัครใหม่
+      updateData.id = `user${maxId + 1}`;
     }
-  };
+
+    await setDoc(userRef, updateData);
+
+    setErrorMessage('');
+    router.replace('/login');
+  } catch (error) {
+    console.error('เกิดข้อผิดพลาด:', error);
+    setErrorMessage('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+  }
+};
+
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
