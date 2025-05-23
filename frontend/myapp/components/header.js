@@ -15,7 +15,7 @@ export default function Header() {
 
       {/* Location + Logout Icons */}
       <View style={styles.rightGroup}>
-        <TouchableOpacity onPress={() => router.push('/')} style={styles.iconContainer}>
+        <TouchableOpacity onPress={() => router.push('/nearshops')} style={styles.iconContainer}>
           <Image source={require('../assets/location.png')} style={styles.icon} />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => router.push('/')} style={styles.iconContainer}>

@@ -3,11 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { db } from "@/firebase";
 import { collection, getDocs } from 'firebase/firestore';
 import { MainLayout } from "../components/layout/MainLayout";
-import { StatsCard } from "./StatsCard";
-import ChartComponent from "./ChartComponent";
-import PieChartComponent from "./PieChartComponent";
-import ProvinceChartComponent from "./ProvinceChartComponent";
-import StackedBarByArea from "./StackedBarByArea";
+import { StatsCard } from "../components/layout/StatsCard";
+import ChartComponent from "../components/layout/ChartComponent";
+import PieChartComponent from "../components/layout/PieChartComponent";
+import ProvinceChartComponent from "../components/layout/ProvinceChartComponent";
+import StackedBarByArea from "../components/layout/StackedBarByArea";
 
 const Dashboard = () => {
   const [stats, setStats] = useState({

@@ -227,6 +227,54 @@ const ShopProfileScreen = () => {
     }
   };
 
+  const handleDeleteShop = async () => {
+  try {
+    Alert.alert(
+      "ยืนยันการลบ",
+      "คุณแน่ใจหรือไม่ว่าต้องการลบร้านค้านี้?",
+      [
+        { text: "ยกเลิก", style: "cancel" },
+        {
+          text: "ลบ",
+          style: "destructive",
+          onPress: async () => {
+            const auth = getAuth();
+            const currentUser = auth.currentUser;
+            if (!currentUser) return;
+
+            const shopQuery = query(collection(db, 'shops'), where('uid', '==', currentUser.uid));
+            const shopSnap = await getDocs(shopQuery);
+            if (!shopSnap.empty) {
+              const shopDocId = shopSnap.docs[0].id;
+              await deleteDoc(doc(db, 'shops', shopDocId));
+
+              setModalVisible(false);
+              Alert.alert('ลบสำเร็จ', 'ร้านค้าของคุณถูกลบเรียบร้อยแล้ว');
+              setShopEdit({
+                shopName: '',
+                ownerName: '',
+                category: '',
+                address: '',
+                amphoe: '',
+                district: '',
+                province: '',
+                phone: '',
+                pinAddress: '',
+                detail: '',
+                profileImageUrl: '',
+                shopImageUrls: [],
+              });
+            }
+          }
+        }
+      ]
+    );
+  } catch (error) {
+    console.error("ลบร้านค้าผิดพลาด:", error);
+    Alert.alert('ผิดพลาด', 'ไม่สามารถลบร้านค้าได้');
+  }
+};
+
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.backButton} onPress={goBack}>
@@ -386,15 +434,22 @@ const ShopProfileScreen = () => {
               <TouchableOpacity style={styles.addImageBtn} onPress={addShopImage}>
                 <Text style={styles.addImageText}>+ เพิ่มรูปภาพใหม่</Text>
               </TouchableOpacity>
-
               <View style={styles.buttonRow}>
-                <TouchableOpacity style={styles.cancelBtn} onPress={() => setModalVisible(false)}>
-                  <Text style={styles.buttonText}>ยกเลิก</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.confirmBtn} onPress={handleSaveShopEdit}>
-                  <Text style={styles.buttonText}>บันทึก</Text>
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => setModalVisible(false)}>
+                <Text style={styles.buttonText}>ยกเลิก</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.confirmBtn} onPress={handleSaveShopEdit}>
+                <Text style={styles.buttonText}>บันทึก</Text>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.confirmBtn, { backgroundColor: '#FF3B30', marginTop: 10 }]}
+              onPress={handleDeleteShop}
+            >
+              <Text style={styles.buttonText}>ลบร้านนี้</Text>
+            </TouchableOpacity>
+
             </ScrollView>
           </View>
         </View>
