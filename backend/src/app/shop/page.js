@@ -19,7 +19,7 @@ export default function ShopListPage() {
 
   const fetchShops = async () => {
     try {
-      const res = await fetch('/api/shops'); // ✅ ใช้ API route แทน Firestore
+      const res = await fetch('/api/shops');
       const data = await res.json();
       setState(prev => ({ ...prev, shops: data }));
     } catch (error) {

@@ -31,3 +31,25 @@ export async function PUT(req, { params }) {
     );
   }
 }
+
+// POST: เพิ่มโพสต์ใหม่
+export async function POST(req, { params }) {
+  const { type } = params;
+  const body = await req.json();
+
+  try {
+    const newDocRef = doc(collection(db, type)); // สร้าง id ใหม่อัตโนมัติ
+    const newPost = {
+      ...body,
+      createdAt: new Date(),
+    };
+    await setDoc(newDocRef, newPost);
+    return NextResponse.json({ success: true, id: newDocRef.id });
+  } catch (err) {
+    return NextResponse.json(
+      { error: 'สร้างโพสต์ไม่สำเร็จ', detail: err.message },
+      { status: 500 }
+    );
+  }
+}
+
