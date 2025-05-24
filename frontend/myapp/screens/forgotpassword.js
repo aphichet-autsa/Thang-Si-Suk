@@ -39,7 +39,7 @@ export default function ForgotPasswordScreen() {
       source={require('../assets/background.png')}
       style={styles.background}
       resizeMode="cover"
-      imageStyle={{ backgroundColor: '#B7E305' }}
+      imageStyle={{ backgroundColor: '#A3CC01' }}
     >
       <SafeAreaView style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.container}>
