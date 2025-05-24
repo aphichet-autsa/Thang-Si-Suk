@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { MainLayout } from "../components/layout/MainLayout";
-import Image from "next/image";
+import EditUserModal from '../components/layout/EditUserModal';
 
 export default function UserListPage() {
   const [users, setUsers] = useState([]);
@@ -38,7 +38,7 @@ export default function UserListPage() {
 
   const handleSaveEdit = async (newData) => {
     try {
-      await fetch(`/api/users/${editingUser.uid}`, {
+      await fetch(`/api/users/${newData.uid}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -74,42 +74,39 @@ export default function UserListPage() {
           />
         </div>
 
-        <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: 'white', fontSize: '14px' }}>
-          <thead style={{ backgroundColor: '#f0f0f0' }}>
-            <tr>
-              <th style={thStyle}>ไอดี</th>
-              <th style={thStyle}>ชื่อ</th>
-              <th style={thStyle}>อีเมล</th>
-              <th style={thStyle}>รหัสผ่าน</th>
-              <th style={thStyle}>Facebook</th>
-              <th style={thStyle}>Instagram</th>
-              <th style={thStyle}>Line</th>
-              <th style={thStyle}>เบอร์โทร</th>
-              <th style={thStyle}>สถานะ</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredUsers.map((user) => (
-              <tr key={user.uid}>
-                <td style={tdStyle}>{user.id}</td>
-                <td style={tdStyle}>{user.name}</td>
-                <td style={tdStyle}>{user.email}</td>
-                <td style={tdStyle}>{user.password}</td>
-                <td style={tdStyle}>{user.facebook}</td>
-                <td style={tdStyle}>{user.ig}</td>
-                <td style={tdStyle}>{user.idline}</td>
-                <td style={tdStyle}>{user.phoneNumber}</td>
-                <td style={tdStyle}>
-                  <button style={editButtonStyle} onClick={() => setEditingUser(user)}>แก้ไข</button>
-                  <button style={deleteButtonStyle} onClick={() => handleDelete(user.uid)}>ลบ</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(420px, 1fr))',
+          gap: '20px'
+        }}>
+          {filteredUsers.map((user) => (
+            <div key={user.uid} style={{ backgroundColor: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
+                <img
+                  src={user.profileImageUrl || '/default-avatar.png'}
+                  alt="avatar"
+                  style={{ width: 48, height: 48, borderRadius: '50%', marginRight: 12 }}
+                />
+                <div>
+                  <strong>{user.name || '-'}</strong>
+                  <p style={{ fontSize: 12, color: '#888', margin: 0 }}>{user.email || '-'}</p>
+                </div>
+              </div>
+              <p style={{ fontSize: 13, marginBottom: 10 }}><b>เบอร์โทร:</b> {user.phoneNumber || '-'}</p>
+              <p style={{ fontSize: 13, marginBottom: 10 }}><b>Facebook:</b> {user.facebook || '-'}</p>
+              <p style={{ fontSize: 13, marginBottom: 10 }}><b>Instagram:</b> {user.ig || '-'}</p>
+              <p style={{ fontSize: 13, marginBottom: 10 }}><b>Line:</b> {user.idline || '-'}</p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '15px' }}>
+                <button style={editButtonStyle} onClick={() => setEditingUser(user)}>แก้ไข</button>
+                <button style={deleteButtonStyle} onClick={() => handleDelete(user.uid)}>ลบ</button>
+              </div>
+            </div>
+          ))}
+        </div>
 
         {editingUser && (
           <EditUserModal
+            key={editingUser.uid}
             user={editingUser}
             onClose={() => setEditingUser(null)}
             onSave={handleSaveEdit}
@@ -120,126 +117,23 @@ export default function UserListPage() {
   );
 }
 
-function EditUserModal({ user, onClose, onSave }) {
-  const [formData, setFormData] = useState(user);
-
-  const fields = [
-    { name: 'name', label: 'ชื่อผู้ใช้', icon: '/User.png' },
-    { name: 'email', label: 'อีเมล', icon: '/Email.png' },
-    { name: 'password', label: 'รหัสผ่าน', icon: '/Lock.png' },
-    { name: 'phoneNumber', label: 'เบอร์โทร', icon: '/Call.png' },
-    { name: 'facebook', label: 'Facebook', icon: '/fackbook.png' },
-    { name: 'ig', label: 'Instagram', icon: '/ig.png' },
-    { name: 'idline', label: 'Line', icon: '/Line.png' },
-  ];
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = () => {
-    onSave(formData);
-  };
-
-  return (
-    <div style={modalOverlay}>
-      <div style={modalContent}>
-        <h2 style={{ marginBottom: '20px' }}>แก้ไขผู้ใช้ในระบบ</h2>
-
-        {fields.map((field, index) => (
-          <div key={index} style={{ display: "flex", alignItems: "center", marginBottom: "10px" }}>
-            <Image src={field.icon} alt="icon" width={24} height={24} style={{ marginRight: "10px" }} />
-            <input
-              type="text"
-              name={field.name}
-              value={formData[field.name] || ''}
-              onChange={handleChange}
-              placeholder={field.label}
-              style={{
-                backgroundColor: '#FFFFFF',
-                border: '1px solid black',
-                borderRadius: '5px',
-                padding: '8px',
-                flex: 1
-              }}
-            />
-          </div>
-        ))}
-
-        <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'space-between' }}>
-          <button onClick={onClose} style={cancelButtonStyle}>ยกเลิก</button>
-          <button onClick={handleSubmit} style={confirmButtonStyle}>ยืนยัน</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-const thStyle = {
-  padding: '10px',
-  borderBottom: '1px solid #ddd',
-  fontWeight: 'bold'
-};
-
-const tdStyle = {
-  padding: '8px',
-  borderBottom: '1px solid #ddd',
-  textAlign: 'center'
-};
-
 const editButtonStyle = {
   backgroundColor: '#FFC107',
   border: 'none',
-  padding: '5px 10px',
-  borderRadius: '5px',
-  marginRight: '5px',
-  cursor: 'pointer'
+  padding: '10px 20px',
+  borderRadius: '8px',
+  fontWeight: 'bold',
+  cursor: 'pointer',
+  width: '48%'
 };
 
 const deleteButtonStyle = {
   backgroundColor: '#f44336',
   border: 'none',
-  padding: '5px 10px',
-  borderRadius: '5px',
-  cursor: 'pointer',
-  color: 'white'
-};
-
-const modalOverlay = {
-  position: 'fixed',
-  top: 0,
-  left: 0,
-  width: '100%',
-  height: '100%',
-  backgroundColor: 'rgba(0,0,0,0.5)',
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  zIndex: 1000
-};
-
-const modalContent = {
-  backgroundColor: '#FFF9C4',
-  padding: '30px',
-  borderRadius: '10px',
-  width: '400px'
-};
-
-const cancelButtonStyle = {
-  padding: '10px',
+  padding: '10px 20px',
   borderRadius: '8px',
-  backgroundColor: '#ddd',
-  width: '45%',
-  border: 'none',
-  cursor: 'pointer'
-};
-
-const confirmButtonStyle = {
-  padding: '10px',
-  borderRadius: '8px',
-  backgroundColor: '#4CAF50',
+  fontWeight: 'bold',
   color: 'white',
-  width: '45%',
-  border: 'none',
-  cursor: 'pointer'
+  cursor: 'pointer',
+  width: '48%'
 };
