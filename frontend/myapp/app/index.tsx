@@ -7,8 +7,13 @@ export default function IndexRedirect() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
+<<<<<<< Updated upstream
       router.replace('/login'); // เปลี่ยนหน้าไป login หลัง 3 วิ
     }, 3000);
+=======
+      router.replace('/login'); // เปลี่ยนเส้นทางไปที่หน้า Login หลังจาก render เสร็จ
+    }, 0);
+>>>>>>> Stashed changes
 
     return () => clearTimeout(timer);
   }, []);

@@ -1,6 +1,8 @@
-
+import React from 'react';
 import LoginScreen from '../screens/Login';
 
-export default function LoginPage() {
+const LoginPage = () => {
   return <LoginScreen />;
-}
+};
+
+export default LoginPage;

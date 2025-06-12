@@ -110,8 +110,21 @@ export default function HomeScreen() {
           </View>
         </ScrollView>
 
+<<<<<<< Updated upstream
         {/* ✅ BottomNav อยู่ล่างสุด */}
         <BottomNav />
+=======
+        {/* Bottom Nav */}
+        <View style={styles.navBar}>
+          <NavItem icon={require('../assets/home-2.png')} label="หน้าแรก" active />
+          <NavItem icon={require('../assets/shop.png')} label="ร้านรับซื้อ" onPress={() => router.push('/shop')} />
+         <TouchableOpacity style={styles.navItemCenter} onPress={() => router.push('/Post')}>
+                   <Image source={require('../assets/plus.png')} style={styles.bottomIconCenter} />
+          </TouchableOpacity>
+          <NavItem icon={require('../assets/location.png')} label="ร้านใกล้ฉัน" active />
+          <NavItem icon={require('../assets/test-account.png')} label="ฉัน" onPress={() => router.push('/MyShopScreen')} />
+        </View>
+>>>>>>> Stashed changes
       </View>
     </ImageBackground>
   );
